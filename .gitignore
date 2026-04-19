@@ -1,0 +1,14 @@
+# Visual Studio / Rider IDE folders at repo root
+.vs/
+.idea/
+*.suo
+*.user
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
