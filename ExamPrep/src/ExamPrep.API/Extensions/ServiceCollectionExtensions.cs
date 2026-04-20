@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
     {
         // Database
         services.AddDbContext<ExamPrepDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
         // Identity
         services.AddIdentity<IdentityUser, IdentityRole>(options =>

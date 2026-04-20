@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: examprep-api
+    runtime: dotnet
+    buildCommand: dotnet publish src/ExamPrep.API/ExamPrep.API.csproj -c Release -o out
+    startCommand: dotnet out/ExamPrep.API.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false   # set manually in Render dashboard
+      - key: Jwt__Key
+        sync: false   # set manually in Render dashboard
+      - key: Jwt__Issuer
+        value: ExamPrep
+      - key: Jwt__Audience
+        value: ExamPrepUsers
+      - key: AllowedOrigins__0
+        sync: false   # set to your Vercel URL in Render dashboard

@@ -1,0 +1,15 @@
+**/.vs
+**/.vscode
+**/.idea
+**/bin
+**/obj
+**/.git
+**/.gitignore
+**/node_modules
+**/client
+**/dist
+**/*.md
+**/tests
+Dockerfile
+.dockerignore
+render.yaml

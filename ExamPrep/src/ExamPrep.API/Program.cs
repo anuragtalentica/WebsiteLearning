@@ -9,34 +9,34 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddExamPrepServices(builder.Configuration);
 
-// CORS for React dev server
+// CORS — allow dev server + production Vercel URL via config
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:5173", "http://localhost:5174"];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDev", policy =>
-        policy.WithOrigins("http://localhost:5173")
-            .AllowAnyHeader()
-            .AllowAnyMethod());
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod());
 });
 
 var app = builder.Build();
 
-// Seed data in development
-if (app.Environment.IsDevelopment())
+// Seed data on every startup (safe — checks if data exists before inserting)
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ExamPrepDbContext>();
     await context.Database.EnsureCreatedAsync();
     await SeedData.SeedAsync(context);
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowReactDev");
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import Navbar from '@/components/Layout/Navbar';
@@ -21,6 +21,9 @@ import CertPathsPage from '@/pages/CertPathsPage';
 import CertPathDetailPage from '@/pages/CertPathDetailPage';
 import NewsPage from '@/pages/NewsPage';
 import DashboardPage from '@/pages/DashboardPage';
+import AboutPage from '@/pages/AboutPage';
+import PrivacyPage from '@/pages/PrivacyPage';
+import TermsPage from '@/pages/TermsPage';
 
 function Footer() {
   return (
@@ -31,9 +34,9 @@ function Footer() {
             &copy; {new Date().getFullYear()} ExamPrep. Built for learners, by learners.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">About</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-            <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+            <Link to="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
           </div>
         </div>
       </div>
@@ -84,6 +87,11 @@ export default function App() {
                 <Route path="/dashboard" element={
                   <ProtectedRoute><DashboardPage /></ProtectedRoute>
                 } />
+
+                {/* Static pages */}
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
               </Routes>
             </main>
             <Footer />
