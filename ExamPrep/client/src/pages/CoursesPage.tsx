@@ -86,7 +86,7 @@ export default function CoursesPage() {
             )}
           >
             {categories.map(cat => (
-              <option key={cat} value={cat}>
+              <option key={cat} value={cat} style={{ background: '#fff', color: '#000' }}>
                 {cat === 'All' ? 'All Categories' : cat}
               </option>
             ))}
@@ -105,7 +105,7 @@ export default function CoursesPage() {
             )}
           >
             {difficulties.map(diff => (
-              <option key={diff} value={diff}>
+              <option key={diff} value={diff} style={{ background: '#fff', color: '#000' }}>
                 {diff === 'All' ? 'All Levels' : diff}
               </option>
             ))}

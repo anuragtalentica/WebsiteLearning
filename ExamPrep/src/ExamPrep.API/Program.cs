@@ -25,12 +25,26 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Seed data on every startup (safe — checks if data exists before inserting)
-using (var scope = app.Services.CreateScope())
+try
 {
+    using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ExamPrepDbContext>();
     await context.Database.EnsureCreatedAsync();
     await SeedData.SeedAsync(context);
 }
+catch (Exception ex)
+{
+    var logPath = Path.Combine(AppContext.BaseDirectory, "startup-error.txt");
+    await File.WriteAllTextAsync(logPath, $"{DateTime.UtcNow}\n{ex}");
+    // Continue starting up so the error endpoint is reachable
+}
+
+// Temp diagnostic endpoint — remove after fixing startup error
+app.MapGet("/startup-error", async () =>
+{
+    var logPath = Path.Combine(AppContext.BaseDirectory, "startup-error.txt");
+    return File.Exists(logPath) ? await File.ReadAllTextAsync(logPath) : "No startup error logged.";
+});
 
 app.UseSwagger();
 app.UseSwaggerUI();
