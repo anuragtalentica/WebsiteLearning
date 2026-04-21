@@ -1,5 +1,6 @@
 using ExamPrep.API.Extensions;
 using ExamPrep.Infrastructure.Data;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,12 +32,14 @@ try
     var context = scope.ServiceProvider.GetRequiredService<ExamPrepDbContext>();
     await context.Database.EnsureCreatedAsync();
     await SeedData.SeedAsync(context);
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await SeedData.SeedAdminAsync(userManager, roleManager);
 }
 catch (Exception ex)
 {
     var logPath = Path.Combine(AppContext.BaseDirectory, "startup-error.txt");
     await File.WriteAllTextAsync(logPath, $"{DateTime.UtcNow}\n{ex}");
-    // Continue starting up so the error endpoint is reachable
 }
 
 // Temp diagnostic endpoint — remove after fixing startup error

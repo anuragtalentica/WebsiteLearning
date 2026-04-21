@@ -5,15 +5,17 @@ import type { ApiResponse, AuthResponse } from '../types';
 interface AuthUser {
   email: string;
   fullName: string;
+  role: string;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,17 +34,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleAuthResponse = (data: AuthResponse) => {
-    const authUser: AuthUser = { email: data.email, fullName: data.fullName };
+    const authUser: AuthUser = { email: data.email, fullName: data.fullName, role: data.role ?? 'User' };
     setToken(data.token);
     setUser(authUser);
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(authUser));
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<string> => {
     const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
     if (response.data.success && response.data.data) {
       handleAuthResponse(response.data.data);
+      return response.data.data.role ?? 'User';
     } else {
       throw new Error(response.data.message || 'Login failed');
     }
@@ -65,7 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{
+      user, token, login, register, logout,
+      isAuthenticated: !!token,
+      isAdmin: user?.role === 'Admin'
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { Shield } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,7 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -46,14 +47,14 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand */}
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to={isAdmin ? '/admin' : '/'} className="flex items-center gap-2 group">
           <GraduationCap className="h-7 w-7 text-primary transition-transform group-hover:scale-110" />
           <span className="text-xl font-bold text-gradient">ExamPrep</span>
         </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map(({ to, label, icon: Icon }) => (
+          {!isAdmin && navLinks.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -98,14 +99,27 @@ export default function Navbar() {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
 
-                  {/* Dashboard */}
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Link>
+                  {/* Dashboard — only for regular users */}
+                  {!isAdmin && (
+                    <Link
+                      to="/dashboard"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <LayoutDashboard className="h-4 w-4" />
+                      Dashboard
+                    </Link>
+                  )}
+
+                  {/* Admin Panel — only for admins */}
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin Panel
+                    </Link>
+                  )}
 
                   {/* Theme toggle */}
                   <button
@@ -157,7 +171,7 @@ export default function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-card px-4 py-4 space-y-2">
-          {navLinks.map(({ to, label, icon: Icon }) => (
+          {!isAdmin && navLinks.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -186,10 +200,18 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
-                <LayoutDashboard className="h-4 w-4" /> Dashboard
-              </Link>
+              {!isAdmin && (
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                  <LayoutDashboard className="h-4 w-4" /> Dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-primary hover:bg-primary/10">
+                  <Shield className="h-4 w-4" /> Admin Panel
+                </Link>
+              )}
               <button onClick={() => { logout(); setMobileOpen(false); }}
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 w-full">
                 <LogOut className="h-4 w-4" /> Logout

@@ -39,7 +39,7 @@ public class AuthService : IAuthService
             throw new InvalidOperationException($"Registration failed: {errors}");
         }
 
-        return GenerateToken(user, dto.FullName);
+        return await GenerateTokenAsync(user, dto.FullName);
     }
 
     public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
@@ -48,7 +48,8 @@ public class AuthService : IAuthService
         if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
             throw new InvalidOperationException("Invalid email or password.");
 
-        return GenerateToken(user, user.Email ?? "");
+        var fullName = user.UserName ?? user.Email ?? "";
+        return await GenerateTokenAsync(user, fullName);
     }
 
     public async Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordDto dto)
@@ -91,19 +92,23 @@ public class AuthService : IAuthService
         }
     }
 
-    private AuthResponseDto GenerateToken(IdentityUser user, string fullName)
+    private async Task<AuthResponseDto> GenerateTokenAsync(IdentityUser user, string fullName)
     {
         var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiration = DateTime.UtcNow.AddDays(7);
 
-        var claims = new[]
+        var roles = await _userManager.GetRolesAsync(user);
+        var role = roles.FirstOrDefault() ?? "User";
+
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Email, user.Email ?? ""),
             new Claim(ClaimTypes.Name, fullName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Role, role)
         };
 
         var token = new JwtSecurityToken(
@@ -119,6 +124,7 @@ public class AuthService : IAuthService
             Token = new JwtSecurityTokenHandler().WriteToken(token),
             Email = user.Email ?? "",
             FullName = fullName,
+            Role = role,
             Expiration = expiration
         };
     }

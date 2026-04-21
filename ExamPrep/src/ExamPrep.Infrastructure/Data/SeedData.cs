@@ -1,10 +1,33 @@
 using ExamPrep.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExamPrep.Infrastructure.Data;
 
 public static class SeedData
 {
+    public static async Task SeedAdminAsync(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
+    {
+        // Create Admin role if it doesn't exist
+        if (!await roleManager.RoleExistsAsync("Admin"))
+            await roleManager.CreateAsync(new IdentityRole("Admin"));
+
+        if (!await roleManager.RoleExistsAsync("User"))
+            await roleManager.CreateAsync(new IdentityRole("User"));
+
+        // Create admin user if not exists
+        const string adminEmail = "admin@examprep.com";
+        const string adminPassword = "Admin@123456";
+
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
+            await userManager.CreateAsync(adminUser, adminPassword);
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+
     public static async Task SeedAsync(ExamPrepDbContext context)
     {
         if (await context.Certifications.AnyAsync())

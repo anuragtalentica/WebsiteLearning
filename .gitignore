@@ -10,5 +10,8 @@ Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
+# Local dev secrets — never commit real credentials
+**/appsettings.Development.json
+
 # Logs
 *.log

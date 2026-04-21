@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import Navbar from '@/components/Layout/Navbar';
 import NewsTicker from '@/components/NewsTicker';
 import ProtectedRoute from '@/components/Layout/ProtectedRoute';
+import AdminRoute from '@/components/Layout/AdminRoute';
+import AdminPage from '@/pages/AdminPage';
 import HomePage from '@/pages/HomePage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -44,14 +46,12 @@ function Footer() {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const { isAdmin } = useAuth();
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <NewsTicker />
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      {!isAdmin && <NewsTicker />}
             <main className="flex-1">
               <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -88,6 +88,11 @@ export default function App() {
                   <ProtectedRoute><DashboardPage /></ProtectedRoute>
                 } />
 
+                {/* Admin */}
+                <Route path="/admin" element={
+                  <AdminRoute><AdminPage /></AdminRoute>
+                } />
+
                 {/* Static pages */}
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
@@ -96,6 +101,15 @@ export default function App() {
             </main>
             <Footer />
           </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <AppContent />
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
