@@ -2,8 +2,10 @@ using System.Security.Claims;
 using ExamPrep.API.Models;
 using ExamPrep.Application.DTOs;
 using ExamPrep.Application.Interfaces;
+using ExamPrep.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExamPrep.API.Controllers;
 
@@ -12,10 +14,12 @@ namespace ExamPrep.API.Controllers;
 public class MockTestsController : ControllerBase
 {
     private readonly IMockTestService _testService;
+    private readonly ExamPrepDbContext _db;
 
-    public MockTestsController(IMockTestService testService)
+    public MockTestsController(IMockTestService testService, ExamPrepDbContext db)
     {
         _testService = testService;
+        _db = db;
     }
 
     [HttpGet]
@@ -76,6 +80,22 @@ public class MockTestsController : ControllerBase
         if (review == null)
             return NotFound(ApiResponse<TestReviewDto>.Fail("Attempt not found"));
         return Ok(ApiResponse<TestReviewDto>.Ok(review));
+    }
+
+    // GET /api/mocktests/my-best-scores — returns { testId: bestScorePct } for the logged-in user
+    [HttpGet("my-best-scores")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<Dictionary<int, int>>>> GetMyBestScores()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var scores = await _db.TestAttempts
+            .Where(a => a.UserId == userId)
+            .GroupBy(a => a.MockTestId)
+            .Select(g => new { TestId = g.Key, Best = g.Max(a => a.Score) })
+            .ToListAsync();
+
+        var result = scores.ToDictionary(s => s.TestId, s => (int)Math.Round((double)s.Best));
+        return Ok(ApiResponse<Dictionary<int, int>>.Ok(result));
     }
 
     [HttpDelete("{id}")]

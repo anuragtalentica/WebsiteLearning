@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Link } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import Navbar from '@/components/Layout/Navbar';
@@ -28,6 +29,7 @@ import LeaderboardPage from '@/pages/LeaderboardPage';
 import AboutPage from '@/pages/AboutPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import TermsPage from '@/pages/TermsPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 function Footer() {
   return (
@@ -48,81 +50,76 @@ function Footer() {
   );
 }
 
-function AppContent() {
+function AppLayout() {
   const { isAdmin } = useAuth();
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       {!isAdmin && <NewsTicker />}
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-                {/* Courses / Certifications */}
-                <Route path="/courses" element={<CoursesPage />} />
-                <Route path="/courses/:certId" element={<CourseDetailPage />} />
-                <Route path="/courses/:certId/topics" element={<TopicsPage />} />
-                <Route path="/lessons/:lessonId" element={<LessonPage />} />
-                <Route path="/practice/:topicId" element={<QuestionPracticePage />} />
-                <Route path="/practice/retry" element={<QuestionPracticePage />} />
-
-                {/* Mock Tests */}
-                <Route path="/tests" element={<MockTestsPage />} />
-                <Route path="/tests/:testId" element={
-                  <ProtectedRoute><MockTestTakePage /></ProtectedRoute>
-                } />
-                <Route path="/tests/:testId/result" element={
-                  <ProtectedRoute><TestResultPage /></ProtectedRoute>
-                } />
-
-                {/* Leaderboard */}
-                <Route path="/leaderboard" element={<LeaderboardPage />} />
-
-                {/* Cert Paths */}
-                <Route path="/paths" element={<CertPathsPage />} />
-                <Route path="/paths/:pathId" element={<CertPathDetailPage />} />
-
-                {/* News */}
-                <Route path="/news" element={<NewsPage />} />
-
-                {/* Profile */}
-                <Route path="/profile" element={
-                  <ProtectedRoute><ProfilePage /></ProtectedRoute>
-                } />
-
-                {/* Dashboard */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute><DashboardPage /></ProtectedRoute>
-                } />
-
-                {/* Admin */}
-                <Route path="/admin" element={
-                  <AdminRoute><AdminPage /></AdminRoute>
-                } />
-
-                {/* Static pages */}
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
-                <Route path="/terms" element={<TermsPage />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
   );
 }
 
+const router = createBrowserRouter([
+  {
+    element: <AppLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+
+      // Courses
+      { path: '/courses', element: <CoursesPage /> },
+      { path: '/courses/:certId', element: <CourseDetailPage /> },
+      { path: '/courses/:certId/topics', element: <TopicsPage /> },
+      { path: '/lessons/:lessonId', element: <LessonPage /> },
+      { path: '/practice/:topicId', element: <QuestionPracticePage /> },
+      { path: '/practice/retry', element: <QuestionPracticePage /> },
+
+      // Mock Tests
+      { path: '/tests', element: <MockTestsPage /> },
+      {
+        path: '/tests/:testId',
+        element: <ProtectedRoute><MockTestTakePage /></ProtectedRoute>,
+      },
+      {
+        path: '/tests/:testId/result',
+        element: <ProtectedRoute><TestResultPage /></ProtectedRoute>,
+      },
+
+      // Other
+      { path: '/leaderboard', element: <LeaderboardPage /> },
+      { path: '/paths', element: <CertPathsPage /> },
+      { path: '/paths/:pathId', element: <CertPathDetailPage /> },
+      { path: '/news', element: <NewsPage /> },
+      { path: '/profile', element: <ProtectedRoute><ProfilePage /></ProtectedRoute> },
+      { path: '/dashboard', element: <ProtectedRoute><DashboardPage /></ProtectedRoute> },
+      { path: '/admin', element: <AdminRoute><AdminPage /></AdminRoute> },
+
+      // Static
+      { path: '/about', element: <AboutPage /> },
+      { path: '/privacy', element: <PrivacyPage /> },
+      { path: '/terms', element: <TermsPage /> },
+
+      // 404
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+]);
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider>
-          <AppContent />
-        </ThemeProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <ThemeProvider>
+        <RouterProvider router={router} />
+        <Toaster position="bottom-right" richColors closeButton />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

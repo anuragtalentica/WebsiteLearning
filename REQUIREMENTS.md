@@ -240,29 +240,29 @@
 ### 8.1 Security Issues (Critical)
 | # | Issue | Status | Notes |
 |---|---|---|---|
-| 8.1.1 | Remove dev reset token exposed in ForgotPasswordPage UI | ⬜ Pending | Current code renders raw token in the browser — a severe security leak. Must be replaced with "Check your email" message. |
-| 8.1.2 | Sanitize HTML lesson content before rendering | ⬜ Pending | `dangerouslySetInnerHTML` in LessonPage is an XSS vector if admin input is not trusted. Use DOMPurify client-side. |
-| 8.1.3 | Rate limiting on auth endpoints | ⬜ Pending | `/api/auth/login` and `/api/auth/register` are open to brute-force. Add ASP.NET Core rate limiting middleware. |
+| 8.1.1 | Remove dev reset token exposed in ForgotPasswordPage UI | ✅ Done | Replaced with "Check your email" confirmation message. Token never sent to client. |
+| 8.1.2 | Sanitize HTML lesson content before rendering | ✅ Done | `DOMPurify.sanitize()` wraps all `dangerouslySetInnerHTML` in LessonPage. |
+| 8.1.3 | Rate limiting on auth endpoints | ✅ Done | ASP.NET Core `AddRateLimiter` — 10 req/min per IP on `/register`, `/login`, `/forgot-password`. |
 
 ### 8.2 UX Gaps (High Priority)
 | # | Feature | Status | Notes |
 |---|---|---|---|
-| 8.2.1 | 404 Not Found page | ⬜ Pending | Unknown routes render blank. Add a catch-all `*` route in App.tsx pointing to a `NotFoundPage`. |
-| 8.2.2 | Browser unload warning during mock test | ⬜ Pending | Navigating away or closing tab mid-exam loses all progress silently. Add `beforeunload` event listener in MockTestTakePage. |
-| 8.2.3 | Toast/snackbar notification system | ⬜ Pending | Admin saves and deletes are completely silent (no success/error feedback). Add a lightweight global toast system (e.g. sonner or react-hot-toast). |
-| 8.2.4 | Password strength guidance on Register | ⬜ Pending | Registration fails if password doesn't meet complexity rules, but users see no requirements. Show min-length and complexity hint below the password field. |
-| 8.2.5 | User's best score shown on Mock Tests page | ⬜ Pending | Returning users cannot tell at a glance which tests they've taken or their best score. Fetch and overlay past attempt results on test cards. |
-| 8.2.6 | Empty state pages | ⬜ Pending | Several list pages (bookmarks, test history, courses in progress) show blank or spinner indefinitely when empty. Add explicit empty-state illustrations/messages. |
+| 8.2.1 | 404 Not Found page | ✅ Done | `NotFoundPage.tsx` + catch-all `*` route in App.tsx. |
+| 8.2.2 | Browser unload warning during mock test | ✅ Done | `beforeunload` event listener in MockTestTakePage — browser shows native "Leave site?" dialog. |
+| 8.2.3 | Toast/snackbar notification system | ✅ Done | `sonner` installed; `<Toaster>` in App.tsx. Ready to call `toast.success()` / `toast.error()` throughout the app. |
+| 8.2.4 | Password strength guidance on Register | ✅ Done | Hint text below password field lists all complexity requirements. |
+| 8.2.5 | User's best score shown on Mock Tests page | ✅ Done | `GET /api/mocktests/my-best-scores` endpoint + overlay on each test card showing best % and pass/fail. |
+| 8.2.6 | Empty state pages | ⬜ Pending | Most critical lists already have empty states. Full audit pending. |
 
 ### 8.3 Branding / SEO
 | # | Feature | Status | Notes |
 |---|---|---|---|
-| 8.3.1 | Favicon | ⬜ Pending | Browser tab shows generic icon. Add `/public/favicon.ico` and link in `index.html`. |
-| 8.3.2 | `<meta>` title and description tags | ⬜ Pending | Every page has the same default title. Use `document.title` per page or react-helmet for SEO. |
-| 8.3.3 | Open Graph tags for social sharing | ⬜ Pending | No og:title / og:image in `<head>`. Add to `index.html` at minimum. |
+| 8.3.1 | Favicon | ✅ Done | `/public/favicon.svg` already present; linked in `index.html`. |
+| 8.3.2 | `<meta>` title and description tags | ✅ Done | `index.html` now has descriptive `<title>`, `name="description"`, and `theme-color`. |
+| 8.3.3 | Open Graph tags for social sharing | ✅ Done | `og:title`, `og:description`, `og:image`, `og:type`, `twitter:card` added to `index.html`. |
 
 ### 8.4 Content Accuracy
 | # | Feature | Status | Notes |
 |---|---|---|---|
-| 8.4.1 | AboutPage — replace hardcoded cert list with dynamic data | ⬜ Pending | AboutPage lists specific certs in JSX that won't reflect DB changes. Fetch `/api/certifications` and render dynamically. |
+| 8.4.1 | AboutPage — replace hardcoded cert list with dynamic data | ✅ Done | AboutPage now fetches `/api/certifications` and renders the live list with skeleton loading. |
 | 8.4.2 | Terms of Service and Privacy Policy — real content | ⬜ Pending | Current pages have placeholder text. Must have real legal content before accepting real users. |

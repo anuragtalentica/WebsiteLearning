@@ -6,10 +6,13 @@ import type { ApiResponse, MockTest } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertTriangle, Target, FlaskConical, X } from 'lucide-react';
+import { Clock, AlertTriangle, Target, FlaskConical, X, Trophy } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function MockTestsPage() {
+  const { isAuthenticated } = useAuth();
   const [tests, setTests] = useState<MockTest[]>([]);
+  const [bestScores, setBestScores] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [certFilter, setCertFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -19,6 +22,12 @@ export default function MockTestsPage() {
       .then(r => { if (r.data.data) setTests(r.data.data); })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiClient.get<ApiResponse<Record<number, number>>>('/mocktests/my-best-scores')
+      .then(r => { if (r.data.data) setBestScores(r.data.data); });
+  }, [isAuthenticated]);
 
   // Unique certifications from tests for filter dropdown
   const certOptions = useMemo(() => {
@@ -119,7 +128,14 @@ export default function MockTestsPage() {
                       </div>
                     )}
                   </div>
-                  <Link to={`/tests/${test.id}`}><Button className="w-full">Start Test</Button></Link>
+                  {bestScores[test.id] !== undefined && (
+                    <div className={`flex items-center gap-1.5 text-xs mb-3 ${bestScores[test.id] >= test.passingScore ? 'text-success' : 'text-warning'}`}>
+                      <Trophy className="h-3.5 w-3.5" />
+                      Best score: {bestScores[test.id]}%
+                      {bestScores[test.id] >= test.passingScore && <span className="ml-1">(Passed)</span>}
+                    </div>
+                  )}
+                  <Link to={`/tests/${test.id}`}><Button className="w-full">{bestScores[test.id] !== undefined ? 'Retake Test' : 'Start Test'}</Button></Link>
                 </CardContent>
               </Card>
             </motion.div>

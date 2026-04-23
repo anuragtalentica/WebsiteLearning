@@ -28,7 +28,8 @@
       "Bash(powershell -Command \"Get-Process -Name dotnet -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host 'Done'\")",
       "Bash(powershell -Command \"Stop-Process -Id 6688 -Force -ErrorAction SilentlyContinue; Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue; Write-Host 'Done'\")",
       "Bash(powershell -Command \"Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue; Write-Host 'Done'\")",
-      "Bash(powershell -Command \"Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue; Write-Host done\")"
+      "Bash(powershell -Command \"Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue; Write-Host done\")",
+      "Bash(npm install:*)"
     ]
   }
 }

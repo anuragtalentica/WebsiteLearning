@@ -50,7 +50,10 @@ export default function RegisterPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Password</label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" required />
+              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" required minLength={6} />
+              <p className="text-xs text-muted-foreground">
+                Must be at least 6 characters and include an uppercase letter, lowercase letter, digit, and special character (e.g. <span className="font-mono">!</span>, <span className="font-mono">@</span>, <span className="font-mono">#</span>).
+              </p>
             </div>
             <Button type="submit" disabled={loading} className="w-full">{loading ? 'Creating account...' : 'Create Account'}</Button>
             <div className="text-center text-sm text-muted-foreground">

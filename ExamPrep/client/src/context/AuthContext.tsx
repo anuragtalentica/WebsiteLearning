@@ -41,22 +41,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('user', JSON.stringify(authUser));
   };
 
+  const extractErrorMessage = (err: unknown, fallback: string): string => {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      return axiosErr.response?.data?.message || fallback;
+    }
+    if (err instanceof Error) return err.message;
+    return fallback;
+  };
+
   const login = async (email: string, password: string): Promise<string> => {
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
-    if (response.data.success && response.data.data) {
-      handleAuthResponse(response.data.data);
-      return response.data.data.role ?? 'User';
-    } else {
+    try {
+      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', { email, password });
+      if (response.data.success && response.data.data) {
+        handleAuthResponse(response.data.data);
+        return response.data.data.role ?? 'User';
+      }
       throw new Error(response.data.message || 'Login failed');
+    } catch (err) {
+      throw new Error(extractErrorMessage(err, 'Login failed'));
     }
   };
 
   const register = async (email: string, password: string, fullName: string) => {
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', { email, password, fullName });
-    if (response.data.success && response.data.data) {
-      handleAuthResponse(response.data.data);
-    } else {
+    try {
+      const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', { email, password, fullName });
+      if (response.data.success && response.data.data) {
+        handleAuthResponse(response.data.data);
+        return;
+      }
       throw new Error(response.data.message || 'Registration failed');
+    } catch (err) {
+      throw new Error(extractErrorMessage(err, 'Registration failed'));
     }
   };
 

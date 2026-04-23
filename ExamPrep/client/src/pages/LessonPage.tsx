@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/apiClient';
 import type { ApiResponse, LessonDetail, ExternalLink as ExtLink } from '@/types';
@@ -72,7 +73,7 @@ export default function LessonPage() {
       {lesson.content.trimStart().startsWith('<') ? (
         <div
           className="lesson-content mb-8 text-muted-foreground leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: lesson.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(lesson.content) }}
         />
       ) : (
         <div className="mb-8 space-y-2">

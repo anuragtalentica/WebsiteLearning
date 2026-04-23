@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import apiClient from '@/api/apiClient';
 import type { ApiResponse, MockTestDetail, SubmitTest, TestResult } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,19 @@ export default function MockTestTakePage() {
       })
       .finally(() => setLoading(false));
   }, [testId]);
+
+  // Block React Router in-app navigation mid-exam
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !submitting && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // Also warn on browser close / refresh
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0 || !test) return;
@@ -83,6 +96,27 @@ export default function MockTestTakePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
+      {/* Leave exam dialog */}
+      {blocker.state === 'blocked' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold mb-1">Leave the exam?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your progress will be lost. The test will not be submitted and your answers won't be saved.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => blocker.reset()}>Stay</Button>
+              <Button variant="destructive" className="flex-1" onClick={() => blocker.proceed()}>Leave Anyway</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirmation Dialog */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

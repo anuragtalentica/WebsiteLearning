@@ -1,8 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GraduationCap, BookOpen, FlaskConical, Route, Users, Target, Zap, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import apiClient from '@/api/apiClient';
+import type { ApiResponse, Certification } from '@/types';
 
 export default function AboutPage() {
+  const [certifications, setCertifications] = useState<Certification[]>([]);
+
+  useEffect(() => {
+    apiClient.get<ApiResponse<Certification[]>>('/certifications')
+      .then(r => { if (r.data.data) setCertifications(r.data.data); });
+  }, []);
   return (
     <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
 
@@ -79,16 +88,17 @@ export default function AboutPage() {
         <h2 className="text-2xl font-bold mb-6">Certifications Covered</h2>
         <div className="rounded-xl border border-border bg-card/50 p-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-            {[
-              'Microsoft AZ-900', 'Microsoft AZ-104', 'Microsoft AZ-204',
-              'AWS Cloud Practitioner', 'AWS Solutions Architect', 'CompTIA Security+',
-              'Google Cloud ACE',
-            ].map(cert => (
-              <div key={cert} className="flex items-center gap-2 text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
-                {cert}
-              </div>
-            ))}
+            {certifications.length > 0
+              ? certifications.map(cert => (
+                <div key={cert.id} className="flex items-center gap-2 text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+                  {cert.vendor} {cert.code}
+                </div>
+              ))
+              : [1,2,3,4,5,6].map(i => (
+                <div key={i} className="h-5 rounded bg-muted animate-pulse" />
+              ))
+            }
           </div>
           <p className="text-xs text-muted-foreground mt-4">More certifications added regularly.</p>
         </div>
