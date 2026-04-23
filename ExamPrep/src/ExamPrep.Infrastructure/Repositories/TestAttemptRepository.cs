@@ -21,4 +21,12 @@ public class TestAttemptRepository : GenericRepository<TestAttempt>, ITestAttemp
             .Where(a => a.UserId == userId && a.MockTestId == mockTestId)
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
+
+    public async Task<TestAttempt?> GetByIdWithDetailsAsync(int attemptId)
+        => await _dbSet
+            .Include(a => a.MockTest)
+                .ThenInclude(mt => mt.TestQuestions.OrderBy(tq => tq.OrderIndex))
+                    .ThenInclude(tq => tq.Question)
+                        .ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(a => a.Id == attemptId);
 }

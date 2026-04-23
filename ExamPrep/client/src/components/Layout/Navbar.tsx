@@ -4,8 +4,8 @@ import { Shield } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';
 import {
-  GraduationCap, BookOpen, FlaskConical, Route,
-  LayoutDashboard, LogOut, Menu, X, Sun, Moon, User, ChevronDown,
+  GraduationCap, BookOpen, FlaskConical, Route, Trophy,
+  LayoutDashboard, LogOut, Menu, X, Sun, Moon, User, ChevronDown, Settings,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ const navLinks = [
   { to: '/courses', label: 'Courses', icon: BookOpen },
   { to: '/tests', label: 'Mock Tests', icon: FlaskConical },
   { to: '/paths', label: 'Cert Paths', icon: Route },
+  { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
 export default function Navbar() {
@@ -99,15 +100,24 @@ export default function Navbar() {
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
 
-                  {/* Dashboard — only for regular users */}
+                  {/* Dashboard + Profile — only for regular users */}
                   {!isAdmin && (
-                    <Link
-                      to="/dashboard"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      Dashboard
-                    </Link>
+                    <>
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <LayoutDashboard className="h-4 w-4" />
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Profile & Settings
+                      </Link>
+                    </>
                   )}
 
                   {/* Admin Panel — only for admins */}
@@ -201,10 +211,16 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               {!isAdmin && (
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
-                  <LayoutDashboard className="h-4 w-4" /> Dashboard
-                </Link>
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                    <LayoutDashboard className="h-4 w-4" /> Dashboard
+                  </Link>
+                  <Link to="/profile" onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground">
+                    <Settings className="h-4 w-4" /> Profile & Settings
+                  </Link>
+                </>
               )}
               {isAdmin && (
                 <Link to="/admin" onClick={() => setMobileOpen(false)}

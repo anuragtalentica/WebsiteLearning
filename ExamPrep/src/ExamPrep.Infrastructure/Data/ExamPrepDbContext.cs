@@ -33,6 +33,9 @@ public class ExamPrepDbContext : IdentityDbContext<IdentityUser>
     // New — News
     public DbSet<News> News => Set<News>();
 
+    // New — Bookmarks
+    public DbSet<UserBookmark> UserBookmarks => Set<UserBookmark>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -201,6 +204,16 @@ public class ExamPrepDbContext : IdentityDbContext<IdentityUser>
             e.Property(n => n.Title).HasMaxLength(300);
             e.Property(n => n.Category).HasMaxLength(50);
             e.Property(n => n.Url).HasMaxLength(500);
+        });
+
+        // ── UserBookmark ──
+        builder.Entity<UserBookmark>(e =>
+        {
+            e.HasOne(b => b.Question)
+                .WithMany()
+                .HasForeignKey(b => b.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(b => new { b.UserId, b.QuestionId }).IsUnique();
         });
     }
 }

@@ -7,16 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { CheckCircle, XCircle, ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react';
 
 export default function QuestionPracticePage() {
   const { topicId } = useParams<{ topicId: string }>();
+  const { isAuthenticated } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [loading, setLoading] = useState(true);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     if (!topicId) return;
@@ -24,6 +29,28 @@ export default function QuestionPracticePage() {
       .then(r => { if (r.data.data) setQuestions(r.data.data); })
       .finally(() => setLoading(false));
   }, [topicId]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiClient.get<ApiResponse<number[]>>('/bookmarks/ids')
+      .then(r => { if (r.data.data) setBookmarkedIds(new Set(r.data.data)); });
+  }, [isAuthenticated]);
+
+  const toggleBookmark = async (questionId: number) => {
+    if (!isAuthenticated || bookmarkLoading) return;
+    setBookmarkLoading(true);
+    try {
+      if (bookmarkedIds.has(questionId)) {
+        await apiClient.delete(`/bookmarks/${questionId}`);
+        setBookmarkedIds(prev => { const s = new Set(prev); s.delete(questionId); return s; });
+      } else {
+        await apiClient.post(`/bookmarks/${questionId}`);
+        setBookmarkedIds(prev => new Set(prev).add(questionId));
+      }
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (selected === null || !questions[current]) return;
@@ -37,6 +64,7 @@ export default function QuestionPracticePage() {
   const handleNext = () => {
     setSelected(null);
     setResult(null);
+    setShowExplanation(false);
     setCurrent(prev => prev + 1);
   };
 
@@ -64,10 +92,22 @@ export default function QuestionPracticePage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center justify-between mb-2">
             <Badge variant={q.difficultyLevel === 1 ? 'success' : q.difficultyLevel === 2 ? 'warning' : 'destructive'}>
               {q.difficultyLevel === 1 ? 'Easy' : q.difficultyLevel === 2 ? 'Medium' : 'Hard'}
             </Badge>
+            {isAuthenticated && (
+              <button
+                onClick={() => toggleBookmark(q.id)}
+                disabled={bookmarkLoading}
+                className="text-muted-foreground hover:text-primary transition-colors p-1 rounded"
+                title={bookmarkedIds.has(q.id) ? 'Remove bookmark' : 'Bookmark this question'}
+              >
+                {bookmarkedIds.has(q.id)
+                  ? <BookmarkCheck className="h-5 w-5 text-primary" />
+                  : <Bookmark className="h-5 w-5" />}
+              </button>
+            )}
           </div>
           <CardTitle className="text-lg leading-relaxed">{q.questionText}</CardTitle>
         </CardHeader>
@@ -93,10 +133,19 @@ export default function QuestionPracticePage() {
             );
           })}
 
-          {result && result.explanation && (
-            <div className="rounded-lg bg-info/5 border border-info/20 p-4 mt-4">
-              <p className="text-sm font-medium text-info mb-1">Explanation</p>
-              <p className="text-sm text-muted-foreground">{result.explanation}</p>
+          {result && (
+            <div className="mt-4 space-y-3">
+              {result.explanation && !showExplanation && (
+                <Button variant="outline" size="sm" onClick={() => setShowExplanation(true)}>
+                  💡 See Explanation
+                </Button>
+              )}
+              {result.explanation && showExplanation && (
+                <div className="rounded-lg bg-info/5 border border-info/20 p-4">
+                  <p className="text-sm font-medium text-info mb-1">Explanation</p>
+                  <p className="text-sm text-muted-foreground">{result.explanation}</p>
+                </div>
+              )}
             </div>
           )}
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   LayoutDashboard, BookOpen, HelpCircle, ClipboardList,
-  Users, Plus, Pencil, Trash2, Upload, Download, X, Check, ChevronDown
+  Users, Plus, Pencil, Trash2, Upload, Download, X, Check, ChevronDown, Newspaper, Layers
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -32,10 +32,16 @@ interface AdminMockTest {
   negativeMarkingValue: number; passingScore: number; questionCount: number;
 }
 interface AdminUser { id: string; email: string; role: string; }
+interface AdminNews { id: number; title: string; category: string; url?: string; publishedAt: string; }
+interface AdminModule { id: number; title: string; orderIndex: number; certificationId: number; lessonCount: number; }
+interface AdminLesson {
+  id: number; title: string; content: string; codeExample?: string;
+  codeLanguage?: string; externalLinks?: string; orderIndex: number; moduleId: number;
+}
 
 // ── Tab names ──────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'certifications' | 'questions' | 'mocktests' | 'users';
+type Tab = 'dashboard' | 'certifications' | 'questions' | 'mocktests' | 'news' | 'content' | 'users';
 
 // ── Main Component ─────────────────────────────────────────────────────
 
@@ -47,6 +53,8 @@ export default function AdminPage() {
     { id: 'certifications', label: 'Certifications', icon: <BookOpen className="h-4 w-4" /> },
     { id: 'questions', label: 'Questions', icon: <HelpCircle className="h-4 w-4" /> },
     { id: 'mocktests', label: 'Mock Tests', icon: <ClipboardList className="h-4 w-4" /> },
+    { id: 'news', label: 'News', icon: <Newspaper className="h-4 w-4" /> },
+    { id: 'content', label: 'Content', icon: <Layers className="h-4 w-4" /> },
     { id: 'users', label: 'Users', icon: <Users className="h-4 w-4" /> },
   ];
 
@@ -75,6 +83,8 @@ export default function AdminPage() {
       {tab === 'certifications' && <CertificationsTab />}
       {tab === 'questions' && <QuestionsTab />}
       {tab === 'mocktests' && <MockTestsTab />}
+      {tab === 'news' && <NewsTab />}
+      {tab === 'content' && <ContentTab />}
       {tab === 'users' && <UsersTab />}
     </div>
   );
@@ -707,16 +717,372 @@ function MockTestsTab() {
   );
 }
 
+// ── News Tab ───────────────────────────────────────────────────────────
+
+const NEWS_CATEGORIES = ['Cloud', 'AI', 'General', 'Programming', 'Security', 'DevOps'];
+
+function NewsTab() {
+  const [news, setNews] = useState<AdminNews[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', category: 'Cloud', url: '' });
+  const [formError, setFormError] = useState('');
+
+  const load = () => apiClient.get<ApiResponse<AdminNews[]>>('/news?count=50').then(r => {
+    if (r.data.data) setNews(r.data.data);
+  });
+
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    if (!form.title.trim()) { setFormError('Title is required.'); return; }
+    setFormError('');
+    await apiClient.post('/news', { ...form, publishedAt: new Date().toISOString() });
+    setShowForm(false);
+    setForm({ title: '', category: 'Cloud', url: '' });
+    load();
+  };
+
+  const remove = async (id: number) => {
+    if (!confirm('Delete this news item?')) return;
+    await apiClient.delete(`/news/${id}`);
+    load();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          <Plus className="h-4 w-4 mr-1" /> Add News
+        </Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">New News Item</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Title <span className="text-destructive">*</span></label>
+              <Input value={form.title} onChange={e => { setFormError(''); setForm(p => ({ ...p, title: e.target.value })); }} className="mt-1" placeholder="e.g. AWS Launches New Region in Southeast Asia" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Category</label>
+                <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                  className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
+                  {NEWS_CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#fff', color: '#000' }}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">URL (optional)</label>
+                <Input value={form.url} onChange={e => setForm(p => ({ ...p, url: e.target.value }))} className="mt-1" placeholder="https://..." />
+              </div>
+            </div>
+            {formError && <p className="text-xs text-destructive">{formError}</p>}
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => { setShowForm(false); setFormError(''); }}>Cancel</Button>
+              <Button size="sm" onClick={create}>Add</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="pt-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-muted-foreground">
+                <th className="pb-2">Title</th>
+                <th className="pb-2">Category</th>
+                <th className="pb-2">Date</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {news.map(n => (
+                <tr key={n.id} className="border-b border-border/50">
+                  <td className="py-2">
+                    {n.url ? <a href={n.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{n.title}</a> : n.title}
+                  </td>
+                  <td className="py-2"><Badge variant="secondary">{n.category}</Badge></td>
+                  <td className="py-2 text-muted-foreground text-xs">{new Date(n.publishedAt).toLocaleDateString()}</td>
+                  <td className="py-2">
+                    <Button variant="ghost" size="sm" onClick={() => remove(n.id)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {news.length === 0 && <p className="text-center text-muted-foreground text-sm py-6">No news items yet.</p>}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Content Tab (Modules & Lessons) ───────────────────────────────────
+
+function ContentTab() {
+  const [certs, setCerts] = useState<Certification[]>([]);
+  const [selectedCert, setSelectedCert] = useState<number | null>(null);
+  const [modules, setModules] = useState<AdminModule[]>([]);
+  const [selectedModule, setSelectedModule] = useState<AdminModule | null>(null);
+  const [lessons, setLessons] = useState<AdminLesson[]>([]);
+
+  // Module form
+  const [editingModule, setEditingModule] = useState<Partial<AdminModule> | null>(null);
+  const [isNewModule, setIsNewModule] = useState(false);
+
+  // Lesson form
+  const [editingLesson, setEditingLesson] = useState<Partial<AdminLesson> | null>(null);
+  const [isNewLesson, setIsNewLesson] = useState(false);
+
+  useEffect(() => {
+    apiClient.get<ApiResponse<Certification[]>>('/certifications').then(r => {
+      if (r.data.data) setCerts(r.data.data);
+    });
+  }, []);
+
+  const loadModules = (certId: number) => {
+    apiClient.get<ApiResponse<AdminModule[]>>(`/admin/modules/${certId}`).then(r => {
+      if (r.data.data) setModules(r.data.data);
+    });
+  };
+
+  const loadLessons = (moduleId: number) => {
+    apiClient.get<ApiResponse<AdminLesson[]>>(`/admin/lessons/${moduleId}`).then(r => {
+      if (r.data.data) setLessons(r.data.data);
+    });
+  };
+
+  const saveModule = async () => {
+    if (!editingModule?.title?.trim()) return;
+    if (isNewModule) {
+      await apiClient.post('/admin/modules', { ...editingModule, certificationId: selectedCert });
+    } else {
+      await apiClient.put(`/admin/modules/${editingModule.id}`, editingModule);
+    }
+    setEditingModule(null);
+    if (selectedCert) loadModules(selectedCert);
+  };
+
+  const deleteModule = async (id: number) => {
+    if (!confirm('Delete this module and all its lessons?')) return;
+    await apiClient.delete(`/admin/modules/${id}`);
+    if (selectedModule?.id === id) { setSelectedModule(null); setLessons([]); }
+    if (selectedCert) loadModules(selectedCert);
+  };
+
+  const saveLesson = async () => {
+    if (!editingLesson?.title?.trim()) return;
+    if (isNewLesson) {
+      await apiClient.post('/admin/lessons', { ...editingLesson, moduleId: selectedModule?.id });
+    } else {
+      await apiClient.put(`/admin/lessons/${editingLesson.id}`, editingLesson);
+    }
+    setEditingLesson(null);
+    if (selectedModule) loadLessons(selectedModule.id);
+  };
+
+  const deleteLesson = async (id: number) => {
+    if (!confirm('Delete this lesson?')) return;
+    await apiClient.delete(`/admin/lessons/${id}`);
+    if (selectedModule) loadLessons(selectedModule.id);
+  };
+
+  const selectStyle = "h-9 rounded-md border border-input bg-background px-3 text-sm";
+
+  return (
+    <div className="space-y-6">
+      {/* Cert selector */}
+      <div className="flex items-center gap-3">
+        <select
+          value={selectedCert ?? ''}
+          onChange={e => {
+            const id = Number(e.target.value);
+            setSelectedCert(id || null);
+            setSelectedModule(null);
+            setLessons([]);
+            setModules([]);
+            if (id) loadModules(id);
+          }}
+          className={selectStyle}
+          style={{ color: 'inherit' }}
+        >
+          <option value="" style={{ background: '#fff', color: '#000' }}>Select Certification</option>
+          {certs.map(c => <option key={c.id} value={c.id} style={{ background: '#fff', color: '#000' }}>{c.code} — {c.name}</option>)}
+        </select>
+      </div>
+
+      {selectedCert && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* ── Modules column ── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Modules</h3>
+              <Button size="sm" onClick={() => { setEditingModule({ title: '', orderIndex: modules.length + 1 }); setIsNewModule(true); }}>
+                <Plus className="h-3 w-3 mr-1" /> Add
+              </Button>
+            </div>
+
+            {editingModule && (
+              <Card>
+                <CardContent className="pt-4 space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Title</label>
+                    <Input value={editingModule.title ?? ''} onChange={e => setEditingModule(p => ({ ...p, title: e.target.value }))} className="mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Order</label>
+                    <Input type="number" value={editingModule.orderIndex ?? 1} onChange={e => setEditingModule(p => ({ ...p, orderIndex: Number(e.target.value) }))} className="mt-1 h-8" />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingModule(null)}>Cancel</Button>
+                    <Button size="sm" onClick={saveModule}>Save</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardContent className="pt-4 space-y-2">
+                {modules.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No modules yet.</p>}
+                {modules.map(m => (
+                  <div key={m.id}
+                    onClick={() => { setSelectedModule(m); loadLessons(m.id); setEditingLesson(null); }}
+                    className={`flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${selectedModule?.id === m.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-secondary/50'}`}>
+                    <div>
+                      <p className="text-sm font-medium">{m.title}</p>
+                      <p className="text-xs text-muted-foreground">{m.lessonCount} lesson{m.lessonCount !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); setEditingModule(m); setIsNewModule(false); }}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); deleteModule(m.id); }}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* ── Lessons column ── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">
+                {selectedModule ? `Lessons: ${selectedModule.title}` : 'Lessons'}
+              </h3>
+              {selectedModule && (
+                <Button size="sm" onClick={() => { setEditingLesson({ title: '', content: '', orderIndex: lessons.length + 1, moduleId: selectedModule.id }); setIsNewLesson(true); }}>
+                  <Plus className="h-3 w-3 mr-1" /> Add
+                </Button>
+              )}
+            </div>
+
+            {!selectedModule && (
+              <p className="text-sm text-muted-foreground text-center py-8">Select a module to manage lessons.</p>
+            )}
+
+            {/* Lesson edit form */}
+            {editingLesson && (
+              <Card>
+                <CardHeader><CardTitle className="text-sm">{isNewLesson ? 'New Lesson' : 'Edit Lesson'}</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Title <span className="text-destructive">*</span></label>
+                    <Input value={editingLesson.title ?? ''} onChange={e => setEditingLesson(p => ({ ...p, title: e.target.value }))} className="mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Content (HTML) <span className="text-destructive">*</span></label>
+                    <textarea
+                      className="w-full mt-1 h-48 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                      value={editingLesson.content ?? ''}
+                      onChange={e => setEditingLesson(p => ({ ...p, content: e.target.value }))}
+                      placeholder="<p>Lesson content here...</p>"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">Code Example</label>
+                      <textarea
+                        className="w-full mt-1 h-24 rounded-md border border-input bg-background px-3 py-2 text-xs font-mono"
+                        value={editingLesson.codeExample ?? ''}
+                        onChange={e => setEditingLesson(p => ({ ...p, codeExample: e.target.value }))}
+                        placeholder="Optional code snippet..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Code Language</label>
+                      <Input value={editingLesson.codeLanguage ?? ''} onChange={e => setEditingLesson(p => ({ ...p, codeLanguage: e.target.value }))} className="mt-1" placeholder="e.g. typescript, python" />
+                      <label className="text-xs text-muted-foreground mt-2 block">Order</label>
+                      <Input type="number" value={editingLesson.orderIndex ?? 1} onChange={e => setEditingLesson(p => ({ ...p, orderIndex: Number(e.target.value) }))} className="mt-1 h-8" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingLesson(null)}>Cancel</Button>
+                    <Button size="sm" onClick={saveLesson}>Save</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {selectedModule && !editingLesson && (
+              <Card>
+                <CardContent className="pt-4 space-y-2">
+                  {lessons.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No lessons yet.</p>}
+                  {lessons.map(l => (
+                    <div key={l.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary/50">
+                      <div>
+                        <p className="text-sm font-medium">{l.orderIndex}. {l.title}</p>
+                        {l.codeLanguage && <span className="text-xs text-muted-foreground font-mono">{l.codeLanguage}</span>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingLesson(l); setIsNewLesson(false); }}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => deleteLesson(l.id)}>
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Users Tab ──────────────────────────────────────────────────────────
 
 function UsersTab() {
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    apiClient.get<ApiResponse<AdminUser[]>>('/admin/users').then(r => {
-      if (r.data.data) setUsers(r.data.data);
-    });
-  }, []);
+  const load = () => apiClient.get<ApiResponse<AdminUser[]>>('/admin/users').then(r => {
+    if (r.data.data) setUsers(r.data.data);
+  });
+
+  useEffect(() => { load(); }, []);
+
+  const toggleRole = async (u: AdminUser) => {
+    if (!confirm(`Change ${u.email} to ${u.role === 'Admin' ? 'User' : 'Admin'}?`)) return;
+    setTogglingId(u.id);
+    try {
+      const newRole = u.role === 'Admin' ? 'User' : 'Admin';
+      await apiClient.post(`/admin/users/${u.id}/role`, { role: newRole });
+      load();
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   return (
     <Card>
@@ -724,7 +1090,9 @@ function UsersTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="pb-2">Email</th><th className="pb-2">Role</th>
+              <th className="pb-2">Email</th>
+              <th className="pb-2">Role</th>
+              <th className="pb-2">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -733,6 +1101,16 @@ function UsersTab() {
                 <td className="py-2">{u.email}</td>
                 <td className="py-2">
                   <Badge variant={u.role === 'Admin' ? 'destructive' : 'secondary'}>{u.role}</Badge>
+                </td>
+                <td className="py-2">
+                  <Button
+                    variant="ghost" size="sm"
+                    disabled={togglingId === u.id}
+                    onClick={() => toggleRole(u)}
+                    className="text-xs h-7"
+                  >
+                    {u.role === 'Admin' ? 'Demote to User' : 'Make Admin'}
+                  </Button>
                 </td>
               </tr>
             ))}

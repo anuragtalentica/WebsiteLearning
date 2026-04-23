@@ -1,15 +1,103 @@
-import { useLocation, Link } from 'react-router-dom';
-import type { TestResult, MockTestDetail } from '@/types';
+import { useState } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import type { TestResult, MockTestDetail, TestReview, TestReviewQuestion } from '@/types';
+import type { ApiResponse } from '@/types';
+import apiClient from '@/api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, XCircle, MinusCircle, Clock, Trophy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { CheckCircle, XCircle, MinusCircle, Clock, Trophy, ArrowLeft, ArrowRight, RotateCcw, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+function ReviewQuestion({ q, index, total, onPrev, onNext }: {
+  q: TestReviewQuestion; index: number; total: number;
+  onPrev: () => void; onNext: () => void;
+}) {
+  const [showExplanation, setShowExplanation] = useState(false);
+
+  const statusIcon = q.skipped
+    ? <MinusCircle className="h-5 w-5 text-warning" />
+    : q.isCorrect
+      ? <CheckCircle className="h-5 w-5 text-success" />
+      : <XCircle className="h-5 w-5 text-destructive" />;
+
+  const statusLabel = q.skipped ? 'Skipped' : q.isCorrect ? 'Correct' : 'Incorrect';
+  const statusVariant = q.skipped ? 'warning' : q.isCorrect ? 'success' : 'destructive';
+
+  return (
+    <motion.div key={q.questionId} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.2 }}>
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm text-muted-foreground">Question {index + 1} of {total}</span>
+        <div className="flex items-center gap-2">
+          {statusIcon}
+          <Badge variant={statusVariant as 'warning' | 'success' | 'destructive'}>{statusLabel}</Badge>
+        </div>
+      </div>
+      <Progress value={((index + 1) / total) * 100} className="mb-6" />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base leading-relaxed">{q.questionText}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {q.options.map(opt => {
+            let style = 'border-border opacity-60';
+            if (opt.id === q.correctOptionId) style = 'border-success bg-success/10';
+            else if (opt.id === q.selectedOptionId && !q.isCorrect) style = 'border-destructive bg-destructive/10';
+            return (
+              <div key={opt.id}
+                className={cn('w-full flex items-center gap-3 rounded-lg border p-4 text-sm', style)}>
+                {opt.id === q.correctOptionId && <CheckCircle className="h-4 w-4 text-success shrink-0" />}
+                {opt.id === q.selectedOptionId && !q.isCorrect && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
+                {opt.id !== q.correctOptionId && opt.id !== q.selectedOptionId && <span className="h-4 w-4 shrink-0" />}
+                <span>{opt.optionText}</span>
+              </div>
+            );
+          })}
+
+          {q.skipped && (
+            <div className="rounded-lg bg-warning/5 border border-warning/20 p-3 text-sm text-warning">
+              You skipped this question. The correct answer is highlighted above.
+            </div>
+          )}
+
+          {q.explanation && !showExplanation && (
+            <Button variant="outline" size="sm" onClick={() => setShowExplanation(true)}>
+              Show Explanation
+            </Button>
+          )}
+          {q.explanation && showExplanation && (
+            <div className="rounded-lg bg-info/5 border border-info/20 p-4">
+              <p className="text-sm font-medium text-info mb-1">Explanation</p>
+              <p className="text-sm text-muted-foreground">{q.explanation}</p>
+            </div>
+          )}
+
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={onPrev} disabled={index === 0} className="gap-1">
+              <ArrowLeft className="h-4 w-4" /> Previous
+            </Button>
+            <Button onClick={onNext} disabled={index === total - 1} className="gap-1">
+              Next <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
 
 export default function TestResultPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { result, test } = (location.state || {}) as { result?: TestResult; test?: MockTestDetail };
+
+  const [review, setReview] = useState<TestReview | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewError, setReviewError] = useState('');
 
   if (!result) return (
     <div className="text-center py-20">
@@ -20,6 +108,64 @@ export default function TestResultPage() {
 
   const minutes = Math.floor(result.timeTakenSeconds / 60);
   const seconds = result.timeTakenSeconds % 60;
+
+  const handleReview = async () => {
+    setReviewLoading(true);
+    setReviewError('');
+    try {
+      const res = await apiClient.get<ApiResponse<TestReview>>(`/mocktests/attempts/${result.attemptId}/review`);
+      if (res.data.data) {
+        setReview(res.data.data);
+        setReviewIndex(0);
+      }
+    } catch {
+      setReviewError('Failed to load review. Please try again.');
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  if (review) {
+    const q = review.questions[reviewIndex];
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-xl font-bold">{review.testTitle}</h2>
+            <p className="text-sm text-muted-foreground">Score: {review.score}% — {review.passed ? 'Passed' : 'Not Passed'}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setReview(null)} className="gap-1">
+            <RotateCcw className="h-4 w-4" /> Back to Summary
+          </Button>
+        </div>
+        <ReviewQuestion
+          q={q}
+          index={reviewIndex}
+          total={review.questions.length}
+          onPrev={() => setReviewIndex(i => i - 1)}
+          onNext={() => setReviewIndex(i => i + 1)}
+        />
+        {/* Question navigator dots */}
+        <div className="flex flex-wrap gap-2 mt-6 justify-center">
+          {review.questions.map((rq, i) => (
+            <button
+              key={rq.questionId}
+              onClick={() => setReviewIndex(i)}
+              className={cn(
+                'h-8 w-8 rounded-full text-xs font-medium transition-colors',
+                i === reviewIndex ? 'bg-primary text-primary-foreground' :
+                  rq.skipped ? 'bg-warning/20 text-warning border border-warning/40' :
+                    rq.isCorrect ? 'bg-success/20 text-success border border-success/40' :
+                      'bg-destructive/20 text-destructive border border-destructive/40'
+              )}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
@@ -70,9 +216,24 @@ export default function TestResultPage() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-3 justify-center">
+        {reviewError && (
+          <div className="mb-4 rounded-md bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+            {reviewError}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3 justify-center">
           <Link to="/tests"><Button variant="outline">All Tests</Button></Link>
-          <Link to="/dashboard"><Button>View Dashboard</Button></Link>
+          {test && (
+            <Button variant="outline" className="gap-1"
+              onClick={() => navigate(`/tests/${test.id}`)}>
+              <RefreshCw className="h-4 w-4" /> Retry Test
+            </Button>
+          )}
+          <Button onClick={handleReview} disabled={reviewLoading}>
+            {reviewLoading ? 'Loading...' : 'Review Answers'}
+          </Button>
+          <Link to="/dashboard"><Button variant="outline">View Dashboard</Button></Link>
         </div>
       </motion.div>
     </div>

@@ -67,6 +67,17 @@ public class MockTestsController : ControllerBase
         return Ok(ApiResponse<IEnumerable<TestAttemptDto>>.Ok(attempts));
     }
 
+    [HttpGet("attempts/{attemptId}/review")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<TestReviewDto>>> GetReview(int attemptId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var review = await _testService.GetAttemptReviewAsync(attemptId, userId);
+        if (review == null)
+            return NotFound(ApiResponse<TestReviewDto>.Fail("Attempt not found"));
+        return Ok(ApiResponse<TestReviewDto>.Ok(review));
+    }
+
     [HttpDelete("{id}")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<bool>>> Delete(int id)

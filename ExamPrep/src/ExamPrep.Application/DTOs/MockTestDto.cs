@@ -74,3 +74,32 @@ public class TestAttemptDto
     public bool Passed { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class TestReviewDto
+{
+    public int AttemptId { get; set; }
+    public string TestTitle { get; set; } = string.Empty;
+    public int Score { get; set; }
+    public bool Passed { get; set; }
+    public List<TestReviewQuestionDto> Questions { get; set; } = new();
+}
+
+public class TestReviewQuestionDto
+{
+    public int QuestionId { get; set; }
+    public int OrderIndex { get; set; }
+    public string QuestionText { get; set; } = string.Empty;
+    public List<ReviewOptionDto> Options { get; set; } = new();
+    public int? SelectedOptionId { get; set; }
+    public int CorrectOptionId { get; set; }
+    public bool IsCorrect { get; set; }
+    public bool Skipped { get; set; }
+    public string? Explanation { get; set; }
+}
+
+public class ReviewOptionDto
+{
+    public int Id { get; set; }
+    public string OptionText { get; set; } = string.Empty;
+    public int OrderIndex { get; set; }
+}

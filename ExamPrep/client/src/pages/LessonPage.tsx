@@ -37,25 +37,28 @@ export default function LessonPage() {
         {lesson.questionCount > 0 && <Badge variant="info">{lesson.questionCount} practice questions</Badge>}
       </div>
 
-      {/* Content */}
-      <div className="prose prose-invert max-w-none mb-8">
-        {lesson.content.split('\n').map((line, i) => {
-          if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-semibold mt-8 mb-3 text-foreground">{line.slice(3)}</h2>;
-          if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-semibold mt-6 mb-2 text-foreground">{line.slice(4)}</h3>;
-          if (line.startsWith('- **')) {
-            const match = line.match(/^- \*\*(.+?)\*\*:?\s*(.*)$/);
-            if (match) return <p key={i} className="text-muted-foreground ml-4 mb-1"><strong className="text-foreground">{match[1]}</strong>: {match[2]}</p>;
-          }
-          if (line.startsWith('- ')) return <p key={i} className="text-muted-foreground ml-4 mb-1">&bull; {line.slice(2)}</p>;
-          if (line.startsWith('1. ') || line.startsWith('2. ') || line.startsWith('3. ')) return <p key={i} className="text-muted-foreground ml-4 mb-1">{line}</p>;
-          if (line.startsWith('**')) {
-            const text = line.replace(/\*\*/g, '');
-            return <p key={i} className="text-foreground font-medium mt-2">{text}</p>;
-          }
-          if (line.trim() === '') return <div key={i} className="h-2" />;
-          return <p key={i} className="text-muted-foreground mb-2">{line}</p>;
-        })}
-      </div>
+      {/* Content — HTML if it starts with a tag, otherwise plain text */}
+      {lesson.content.trimStart().startsWith('<') ? (
+        <div
+          className="lesson-content mb-8 text-muted-foreground leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: lesson.content }}
+        />
+      ) : (
+        <div className="mb-8 space-y-2">
+          {lesson.content.split('\n').map((line, i) => {
+            if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-semibold mt-8 mb-3 text-foreground">{line.slice(3)}</h2>;
+            if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-semibold mt-6 mb-2 text-foreground">{line.slice(4)}</h3>;
+            if (line.startsWith('- **')) {
+              const match = line.match(/^- \*\*(.+?)\*\*:?\s*(.*)$/);
+              if (match) return <p key={i} className="text-muted-foreground ml-4 mb-1"><strong className="text-foreground">{match[1]}</strong>: {match[2]}</p>;
+            }
+            if (line.startsWith('- ')) return <p key={i} className="text-muted-foreground ml-4 mb-1">&bull; {line.slice(2)}</p>;
+            if (line.startsWith('**')) return <p key={i} className="text-foreground font-medium mt-2">{line.replace(/\*\*/g, '')}</p>;
+            if (line.trim() === '') return <div key={i} className="h-2" />;
+            return <p key={i} className="text-muted-foreground mb-2">{line}</p>;
+          })}
+        </div>
+      )}
 
       {/* Code Example */}
       {lesson.codeExample && (

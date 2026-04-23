@@ -146,6 +146,26 @@ export interface TestAttempt {
   createdAt: string;
 }
 
+export interface TestReview {
+  attemptId: number;
+  testTitle: string;
+  score: number;
+  passed: boolean;
+  questions: TestReviewQuestion[];
+}
+
+export interface TestReviewQuestion {
+  questionId: number;
+  orderIndex: number;
+  questionText: string;
+  options: { id: number; optionText: string; orderIndex: number }[];
+  selectedOptionId?: number;
+  correctOptionId: number;
+  isCorrect: boolean;
+  skipped: boolean;
+  explanation?: string;
+}
+
 // ── Certification Paths ──
 export interface CertPath {
   id: number;
@@ -209,6 +229,18 @@ export interface CategoryStats {
   category: string;
   attempted: number;
   correct: number;
+}
+
+// ── Bookmarks ──
+export interface Bookmark {
+  id: number;
+  questionId: number;
+  questionText: string;
+  explanation?: string;
+  difficultyLevel: number;
+  topicName: string;
+  options: { id: number; optionText: string; isCorrect: boolean }[];
+  createdAt: string;
 }
 
 // ── Auth ──

@@ -23,6 +23,8 @@ import CertPathsPage from '@/pages/CertPathsPage';
 import CertPathDetailPage from '@/pages/CertPathDetailPage';
 import NewsPage from '@/pages/NewsPage';
 import DashboardPage from '@/pages/DashboardPage';
+import ProfilePage from '@/pages/ProfilePage';
+import LeaderboardPage from '@/pages/LeaderboardPage';
 import AboutPage from '@/pages/AboutPage';
 import PrivacyPage from '@/pages/PrivacyPage';
 import TermsPage from '@/pages/TermsPage';
@@ -76,12 +78,20 @@ function AppContent() {
                   <ProtectedRoute><TestResultPage /></ProtectedRoute>
                 } />
 
+                {/* Leaderboard */}
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+
                 {/* Cert Paths */}
                 <Route path="/paths" element={<CertPathsPage />} />
                 <Route path="/paths/:pathId" element={<CertPathDetailPage />} />
 
                 {/* News */}
                 <Route path="/news" element={<NewsPage />} />
+
+                {/* Profile */}
+                <Route path="/profile" element={
+                  <ProtectedRoute><ProfilePage /></ProtectedRoute>
+                } />
 
                 {/* Dashboard */}
                 <Route path="/dashboard" element={

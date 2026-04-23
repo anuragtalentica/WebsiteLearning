@@ -1,6 +1,7 @@
 using ExamPrep.API.Extensions;
 using ExamPrep.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +31,16 @@ try
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ExamPrepDbContext>();
+
+    // If the DB already has tables but no migration history (EnsureCreated was used before),
+    // insert the InitialCreate migration record so MigrateAsync only runs newer migrations.
     await context.Database.EnsureCreatedAsync();
+    await context.Database.ExecuteSqlRawAsync(
+        "INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") " +
+        "VALUES ('20260419065348_InitialCreate', '9.0.0') ON CONFLICT DO NOTHING");
+
+    await context.Database.MigrateAsync();
+
     await SeedData.SeedAsync(context);
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();

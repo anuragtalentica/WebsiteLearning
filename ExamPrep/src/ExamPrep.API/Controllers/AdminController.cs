@@ -342,6 +342,122 @@ public class AdminController : ControllerBase
         return Ok(ApiResponse<string>.Ok("ok"));
     }
 
+    // ── Modules ────────────────────────────────────────────────────────
+
+    [HttpGet("modules/{certificationId}")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<AdminModuleDto>>>> GetModules(int certificationId)
+    {
+        var modules = await _db.Modules
+            .Where(m => m.CertificationId == certificationId)
+            .OrderBy(m => m.OrderIndex)
+            .Select(m => new AdminModuleDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                OrderIndex = m.OrderIndex,
+                CertificationId = m.CertificationId,
+                LessonCount = m.Lessons.Count
+            })
+            .ToListAsync();
+        return Ok(ApiResponse<IEnumerable<AdminModuleDto>>.Ok(modules));
+    }
+
+    [HttpPost("modules")]
+    public async Task<ActionResult<ApiResponse<object>>> CreateModule([FromBody] AdminModuleDto dto)
+    {
+        var module = new Module { Title = dto.Title, OrderIndex = dto.OrderIndex, CertificationId = dto.CertificationId };
+        _db.Modules.Add(module);
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<object>.Ok(new { module.Id }));
+    }
+
+    [HttpPut("modules/{id}")]
+    public async Task<ActionResult<ApiResponse<string>>> UpdateModule(int id, [FromBody] AdminModuleDto dto)
+    {
+        var module = await _db.Modules.FindAsync(id);
+        if (module == null) return NotFound(ApiResponse<object>.Fail("Not found."));
+        module.Title = dto.Title;
+        module.OrderIndex = dto.OrderIndex;
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<string>.Ok("ok"));
+    }
+
+    [HttpDelete("modules/{id}")]
+    public async Task<ActionResult<ApiResponse<string>>> DeleteModule(int id)
+    {
+        var module = await _db.Modules.FindAsync(id);
+        if (module == null) return NotFound(ApiResponse<object>.Fail("Not found."));
+        _db.Modules.Remove(module);
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<string>.Ok("ok"));
+    }
+
+    // ── Lessons ────────────────────────────────────────────────────────
+
+    [HttpGet("lessons/{moduleId}")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<AdminLessonDto>>>> GetLessons(int moduleId)
+    {
+        var lessons = await _db.Lessons
+            .Where(l => l.ModuleId == moduleId)
+            .OrderBy(l => l.OrderIndex)
+            .Select(l => new AdminLessonDto
+            {
+                Id = l.Id,
+                Title = l.Title,
+                Content = l.Content,
+                CodeExample = l.CodeExample,
+                CodeLanguage = l.CodeLanguage,
+                ExternalLinks = l.ExternalLinks,
+                OrderIndex = l.OrderIndex,
+                ModuleId = l.ModuleId
+            })
+            .ToListAsync();
+        return Ok(ApiResponse<IEnumerable<AdminLessonDto>>.Ok(lessons));
+    }
+
+    [HttpPost("lessons")]
+    public async Task<ActionResult<ApiResponse<object>>> CreateLesson([FromBody] AdminLessonDto dto)
+    {
+        var lesson = new Lesson
+        {
+            Title = dto.Title,
+            Content = dto.Content,
+            CodeExample = dto.CodeExample,
+            CodeLanguage = dto.CodeLanguage,
+            ExternalLinks = dto.ExternalLinks,
+            OrderIndex = dto.OrderIndex,
+            ModuleId = dto.ModuleId
+        };
+        _db.Lessons.Add(lesson);
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<object>.Ok(new { lesson.Id }));
+    }
+
+    [HttpPut("lessons/{id}")]
+    public async Task<ActionResult<ApiResponse<string>>> UpdateLesson(int id, [FromBody] AdminLessonDto dto)
+    {
+        var lesson = await _db.Lessons.FindAsync(id);
+        if (lesson == null) return NotFound(ApiResponse<object>.Fail("Not found."));
+        lesson.Title = dto.Title;
+        lesson.Content = dto.Content;
+        lesson.CodeExample = dto.CodeExample;
+        lesson.CodeLanguage = dto.CodeLanguage;
+        lesson.ExternalLinks = dto.ExternalLinks;
+        lesson.OrderIndex = dto.OrderIndex;
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<string>.Ok("ok"));
+    }
+
+    [HttpDelete("lessons/{id}")]
+    public async Task<ActionResult<ApiResponse<string>>> DeleteLesson(int id)
+    {
+        var lesson = await _db.Lessons.FindAsync(id);
+        if (lesson == null) return NotFound(ApiResponse<object>.Fail("Not found."));
+        _db.Lessons.Remove(lesson);
+        await _db.SaveChangesAsync();
+        return Ok(ApiResponse<string>.Ok("ok"));
+    }
+
     // ── Users ──────────────────────────────────────────────────────────
 
     [HttpGet("users")]
@@ -360,6 +476,18 @@ public class AdminController : ControllerBase
             });
         }
         return Ok(ApiResponse<IEnumerable<AdminUserDto>>.Ok(result));
+    }
+
+    [HttpPost("users/{userId}/role")]
+    public async Task<ActionResult<ApiResponse<string>>> SetUserRole(string userId, [FromBody] SetRoleDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return NotFound(ApiResponse<string>.Fail("User not found"));
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        await _userManager.RemoveFromRolesAsync(user, currentRoles);
+        await _userManager.AddToRoleAsync(user, dto.Role);
+        return Ok(ApiResponse<string>.Ok($"Role set to {dto.Role}"));
     }
 }
 
@@ -468,4 +596,30 @@ public class AdminUserDto
     public string Id { get; set; } = "";
     public string Email { get; set; } = "";
     public string Role { get; set; } = "";
+}
+
+public class SetRoleDto
+{
+    public string Role { get; set; } = "User";
+}
+
+public class AdminModuleDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public int OrderIndex { get; set; }
+    public int CertificationId { get; set; }
+    public int LessonCount { get; set; }
+}
+
+public class AdminLessonDto
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Content { get; set; } = "";
+    public string? CodeExample { get; set; }
+    public string? CodeLanguage { get; set; }
+    public string? ExternalLinks { get; set; }
+    public int OrderIndex { get; set; }
+    public int ModuleId { get; set; }
 }

@@ -191,6 +191,51 @@ public class MockTestService : IMockTestService
         });
     }
 
+    public async Task<TestReviewDto?> GetAttemptReviewAsync(int attemptId, string userId)
+    {
+        var attempt = await _attemptRepo.GetByIdWithDetailsAsync(attemptId);
+        if (attempt == null || attempt.UserId != userId) return null;
+
+        var answers = string.IsNullOrEmpty(attempt.Answers)
+            ? new Dictionary<int, int>()
+            : JsonSerializer.Deserialize<Dictionary<int, int>>(attempt.Answers) ?? new();
+
+        var questions = attempt.MockTest.TestQuestions
+            .OrderBy(tq => tq.OrderIndex)
+            .Select(tq =>
+            {
+                var correctOption = tq.Question.Options.FirstOrDefault(o => o.IsCorrect);
+                answers.TryGetValue(tq.QuestionId, out var selectedId);
+                var skipped = !answers.ContainsKey(tq.QuestionId);
+                return new TestReviewQuestionDto
+                {
+                    QuestionId = tq.QuestionId,
+                    OrderIndex = tq.OrderIndex,
+                    QuestionText = tq.Question.QuestionText,
+                    Options = tq.Question.Options.OrderBy(o => o.OrderIndex).Select(o => new ReviewOptionDto
+                    {
+                        Id = o.Id,
+                        OptionText = o.OptionText,
+                        OrderIndex = o.OrderIndex
+                    }).ToList(),
+                    SelectedOptionId = skipped ? null : selectedId,
+                    CorrectOptionId = correctOption?.Id ?? 0,
+                    IsCorrect = !skipped && correctOption != null && correctOption.Id == selectedId,
+                    Skipped = skipped,
+                    Explanation = tq.Question.Explanation
+                };
+            }).ToList();
+
+        return new TestReviewDto
+        {
+            AttemptId = attempt.Id,
+            TestTitle = attempt.MockTest.Title,
+            Score = attempt.Score,
+            Passed = attempt.Passed,
+            Questions = questions
+        };
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         var test = await _testRepo.GetByIdAsync(id);

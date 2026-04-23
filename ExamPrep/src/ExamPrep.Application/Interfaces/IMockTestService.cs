@@ -10,5 +10,6 @@ public interface IMockTestService
     Task<MockTestDto> CreateAsync(CreateMockTestDto dto);
     Task<TestResultDto> SubmitTestAsync(string userId, SubmitTestDto dto);
     Task<IEnumerable<TestAttemptDto>> GetUserAttemptsAsync(string userId);
+    Task<TestReviewDto?> GetAttemptReviewAsync(int attemptId, string userId);
     Task<bool> DeleteAsync(int id);
 }

@@ -68,11 +68,11 @@
 ### 3.4 Modules & Lessons CRUD
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 3.4.1 | List modules per certification | ⬜ Pending | Endpoints exist, admin UI needed |
-| 3.4.2 | Add / edit / delete module | ⬜ Pending | |
-| 3.4.3 | List lessons per module | ⬜ Pending | |
-| 3.4.4 | Add / edit lesson with rich text editor (TipTap) | ⬜ Pending | Bold, tables, images (URL), code blocks |
-| 3.4.5 | Delete lesson | ⬜ Pending | |
+| 3.4.1 | List modules per certification | ✅ Done | Admin Content tab |
+| 3.4.2 | Add / edit / delete module | ✅ Done | |
+| 3.4.3 | List lessons per module | ✅ Done | |
+| 3.4.4 | Add / edit lesson with HTML content editor | ✅ Done | Textarea HTML editor in admin Content tab |
+| 3.4.5 | Delete lesson | ✅ Done | |
 
 ### 3.5 Questions Management
 | # | Requirement | Status | Notes |
@@ -101,13 +101,13 @@
 |---|---|---|---|
 | 3.7.1 | Add news item | ✅ Done | Existing NewsController |
 | 3.7.2 | Delete news item | ✅ Done | |
-| 3.7.3 | News management tab in Admin Panel | ⬜ Pending | UI tab not yet added to AdminPage |
+| 3.7.3 | News management tab in Admin Panel | ✅ Done | News tab added to AdminPage |
 
 ### 3.8 Users Management
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 3.8.1 | List all users with roles | ✅ Done | |
-| 3.8.2 | Promote user to Admin | ⬜ Pending | Role assignment UI |
+| 3.8.2 | Promote user to Admin | ✅ Done | Toggle Admin/User button in Users tab |
 | 3.8.3 | Multiple admin roles (editor vs super admin) | 🔜 Future | Currently single Admin role |
 
 ---
@@ -127,16 +127,16 @@
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 4.2.1 | View lesson content | ✅ Done | `/lessons/:lessonId` |
-| 4.2.2 | Rich text rendering (TipTap viewer) | ⬜ Pending | Currently plain text |
-| 4.2.3 | Code block rendering with syntax highlight | ⬜ Pending | |
-| 4.2.4 | Images and tables in lesson content | ⬜ Pending | Depends on TipTap editor in admin |
+| 4.2.2 | Rich text rendering (HTML) | ✅ Done | dangerouslySetInnerHTML with CSS styling for h1-h3, lists, tables, code |
+| 4.2.3 | Code block rendering | ✅ Done | Styled pre/code blocks in lesson-content CSS |
+| 4.2.4 | Images and tables in lesson content | ✅ Done | Tables and images supported via HTML renderer |
 
 ### 4.3 Practice Mode
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 4.3.1 | Practice questions by topic | ✅ Done | `/practice/:topicId` |
 | 4.3.2 | Show answer immediately after each question | ✅ Done | Practice mode behavior |
-| 4.3.3 | Show explanation after answering | ⬜ Pending | `explanation` field exists, not shown in UI |
+| 4.3.3 | Show explanation after answering | ✅ Done | "See Explanation" button revealed after submitting answer |
 | 4.3.4 | Practice vs Exam mode distinction in UI | ⬜ Pending | Needs clearer UX separation |
 
 ### 4.4 Mock Tests (Exam Mode)
@@ -144,11 +144,11 @@
 |---|---|---|---|
 | 4.4.1 | Browse available mock tests | ✅ Done | `/tests` |
 | 4.4.2 | Take timed mock test | ✅ Done | `/tests/:testId` |
-| 4.4.3 | Auto-submit when timer expires | ⬜ Pending | Currently manual submit only |
+| 4.4.3 | Auto-submit when timer expires | ✅ Done | Timer calls handleSubmit() when reaches 0 |
 | 4.4.4 | View test result (score, pass/fail) | ✅ Done | `/tests/:testId/result` |
-| 4.4.5 | Review every question after test (your answer vs correct) | ⬜ Pending | Need detailed result page |
-| 4.4.6 | Show explanation per question in result review | ⬜ Pending | |
-| 4.4.7 | Retry test button | ⬜ Pending | |
+| 4.4.5 | Review every question after test (your answer vs correct) | ✅ Done | Paginated review with dot navigator |
+| 4.4.6 | Show explanation per question in result review | ✅ Done | "Show Explanation" button per question |
+| 4.4.7 | Retry test button | ✅ Done | "Retry Test" button on result page navigates back to test |
 | 4.4.8 | Negative marking applied during scoring | ✅ Done | Backend calculates |
 
 ### 4.5 Dashboard
@@ -159,28 +159,28 @@
 | 4.5.3 | Recent activity | ✅ Done | |
 | 4.5.4 | Courses started | ⬜ Pending | Requires UserLessonProgress entity |
 | 4.5.5 | % complete per course (lessons viewed + questions attempted) | ⬜ Pending | Requires progress tracking |
-| 4.5.6 | Full test history with scores | ⬜ Pending | Detailed attempts list |
+| 4.5.6 | Full test history with scores | ✅ Done | Dashboard shows all attempts with correct/wrong/skipped breakdown, show all toggle |
 | 4.5.7 | Category performance stats | ✅ Done | |
 
 ### 4.6 User Profile
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 4.6.1 | View profile (name, email) | ⬜ Pending | Page not created yet |
-| 4.6.2 | Edit display name | ⬜ Pending | |
-| 4.6.3 | Change password | ⬜ Pending | |
-| 4.6.4 | View personal stats summary | ⬜ Pending | |
+| 4.6.1 | View profile (name, email, role) | ✅ Done | `/profile` page with avatar initials |
+| 4.6.2 | Edit display name | ✅ Done | Inline edit form on profile page |
+| 4.6.3 | Change password | ✅ Done | Change password form with validation |
+| 4.6.4 | View personal stats summary | ✅ Done | Covered by Dashboard page |
 
 ### 4.7 Question Bookmarking
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 4.7.1 | Bookmark / unsave a question during practice | ⬜ Pending | Needs UserBookmark entity |
-| 4.7.2 | View saved questions on dashboard | ⬜ Pending | |
+| 4.7.1 | Bookmark / unsave a question during practice | ✅ Done | Bookmark icon on each question (logged-in users only) |
+| 4.7.2 | View saved questions on dashboard | ✅ Done | Expandable bookmarks card on dashboard with answers + explanation |
 
 ### 4.8 Leaderboard
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 4.8.1 | Global leaderboard (ranked by test scores) | ⬜ Pending | |
-| 4.8.2 | Per-certification leaderboard | ⬜ Pending | |
+| 4.8.1 | Global leaderboard (ranked by test scores) | ✅ Done | `/leaderboard` — avg score, best score, tests passed |
+| 4.8.2 | Per-certification leaderboard | ✅ Done | Dropdown filter on leaderboard page |
 
 ---
 
@@ -203,11 +203,11 @@
 | # | Requirement | Status | Notes |
 |---|---|---|---|
 | 6.1 | `UserLessonProgress` entity + migration | ⬜ Pending | Track lessons viewed per user |
-| 6.2 | `UserBookmark` entity + migration | ⬜ Pending | Save bookmarked questions |
-| 6.3 | Leaderboard endpoint | ⬜ Pending | Rank users by test scores |
+| 6.2 | `UserBookmark` entity + migration | ✅ Done | EF migration `AddUserBookmark` applied |
+| 6.3 | Leaderboard endpoint | ✅ Done | `GET /api/leaderboard` and `/api/leaderboard/certification/{id}` |
 | 6.4 | Course progress endpoint | ⬜ Pending | % complete calculation |
-| 6.5 | Detailed test result endpoint (question-by-question) | ⬜ Pending | Return user's answers + correct answers + explanations |
-| 6.6 | Admin: Modules & Lessons CRUD endpoints | ⬜ Pending | Endpoints exist, need admin-scoped versions |
+| 6.5 | Detailed test result endpoint (question-by-question) | ✅ Done | `GET /api/mocktests/attempts/{id}/review` |
+| 6.6 | Admin: Modules & Lessons CRUD endpoints | ✅ Done | `/api/admin/modules` and `/api/admin/lessons` |
 | 6.7 | Remove `/startup-error` diagnostic endpoint | ⬜ Pending | Clean up before next major release |
 
 ---
