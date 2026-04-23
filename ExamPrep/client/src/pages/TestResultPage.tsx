@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { CheckCircle, XCircle, MinusCircle, Clock, Trophy, ArrowLeft, ArrowRight, RotateCcw, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, MinusCircle, Clock, Trophy, ArrowLeft, ArrowRight, RotateCcw, RefreshCw, FlaskConical } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function ReviewQuestion({ q, index, total, onPrev, onNext }: {
@@ -98,6 +98,25 @@ export default function TestResultPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewError, setReviewError] = useState('');
+  const [retryLoading, setRetryLoading] = useState(false);
+
+  const handlePracticeWrong = async () => {
+    setRetryLoading(true);
+    try {
+      const res = await apiClient.get<ApiResponse<TestReview>>(`/mocktests/attempts/${result!.attemptId}/review`);
+      if (res.data.data) {
+        const wrongIds = res.data.data.questions
+          .filter(q => !q.isCorrect && !q.skipped)
+          .map(q => q.questionId);
+        if (wrongIds.length === 0) return;
+        navigate('/practice/retry', {
+          state: { retryIds: wrongIds, label: `Wrong answers from "${test?.title}"` }
+        });
+      }
+    } finally {
+      setRetryLoading(false);
+    }
+  };
 
   if (!result) return (
     <div className="text-center py-20">
@@ -228,6 +247,12 @@ export default function TestResultPage() {
             <Button variant="outline" className="gap-1"
               onClick={() => navigate(`/tests/${test.id}`)}>
               <RefreshCw className="h-4 w-4" /> Retry Test
+            </Button>
+          )}
+          {result.wrongAnswers > 0 && (
+            <Button variant="outline" className="gap-1" onClick={handlePracticeWrong} disabled={retryLoading}>
+              <FlaskConical className="h-4 w-4" />
+              {retryLoading ? 'Loading...' : `Practice ${result.wrongAnswers} Wrong`}
             </Button>
           )}
           <Button onClick={handleReview} disabled={reviewLoading}>

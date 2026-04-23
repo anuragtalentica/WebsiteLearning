@@ -68,6 +68,7 @@ function AppContent() {
                 <Route path="/courses/:certId/topics" element={<TopicsPage />} />
                 <Route path="/lessons/:lessonId" element={<LessonPage />} />
                 <Route path="/practice/:topicId" element={<QuestionPracticePage />} />
+                <Route path="/practice/retry" element={<QuestionPracticePage />} />
 
                 {/* Mock Tests */}
                 <Route path="/tests" element={<MockTestsPage />} />

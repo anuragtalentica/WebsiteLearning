@@ -1,33 +1,57 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import apiClient from '@/api/apiClient';
-import type { ApiResponse, Question, AnswerResult } from '@/types';
+import type { ApiResponse, Question, AnswerResult, TopicStats } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { CheckCircle, XCircle, ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, ArrowLeft, Bookmark, BookmarkCheck, FlaskConical, RefreshCw, Trophy } from 'lucide-react';
 
 export default function QuestionPracticePage() {
   const { topicId } = useParams<{ topicId: string }>();
+  const location = useLocation();
   const { isAuthenticated } = useAuth();
+  // retryIds: passed from TestResultPage when retrying wrong questions from a mock test
+  const retryIds = (location.state as { retryIds?: number[]; label?: string } | null)?.retryIds;
+  const retryLabel = (location.state as { retryIds?: number[]; label?: string } | null)?.label;
+
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [result, setResult] = useState<AnswerResult | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [wrongIds, setWrongIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<number>>(new Set());
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [stats, setStats] = useState<TopicStats | null>(null);
+  const [retryWrongOnly, setRetryWrongOnly] = useState(!!retryIds);
+  const [certificationId, setCertificationId] = useState<number | null>(null);
 
   useEffect(() => {
+    if (retryIds && retryIds.length > 0) {
+      // Retry wrong questions from a mock test — fetch by IDs
+      apiClient.post<ApiResponse<Question[]>>('/questions/by-ids', retryIds)
+        .then(r => {
+          if (r.data.data) { setAllQuestions(r.data.data); setQuestions(r.data.data); }
+        }).finally(() => setLoading(false));
+      return;
+    }
     if (!topicId) return;
-    apiClient.get<ApiResponse<Question[]>>(`/questions/topic/${topicId}`)
-      .then(r => { if (r.data.data) setQuestions(r.data.data); })
-      .finally(() => setLoading(false));
+    Promise.all([
+      apiClient.get<ApiResponse<Question[]>>(`/questions/topic/${topicId}`),
+      apiClient.get<ApiResponse<TopicStats>>(`/questions/topic/${topicId}/stats`),
+      apiClient.get<ApiResponse<{ id: number; name: string; certificationId: number }>>(`/questions/topic/${topicId}/info`),
+    ]).then(([qRes, sRes, infoRes]) => {
+      if (qRes.data.data) { setAllQuestions(qRes.data.data); setQuestions(qRes.data.data); }
+      if (sRes.data.data) setStats(sRes.data.data);
+      if (infoRes.data.data) setCertificationId(infoRes.data.data.certificationId);
+    }).finally(() => setLoading(false));
   }, [topicId]);
 
   useEffect(() => {
@@ -56,8 +80,10 @@ export default function QuestionPracticePage() {
     if (selected === null || !questions[current]) return;
     const res = await apiClient.post<ApiResponse<AnswerResult>>(`/questions/${questions[current].id}/submit`, { selectedOptionId: selected });
     if (res.data.data) {
+      const isCorrect = res.data.data.isCorrect;
       setResult(res.data.data);
-      setScore(prev => ({ correct: prev.correct + (res.data.data!.isCorrect ? 1 : 0), total: prev.total + 1 }));
+      setScore(prev => ({ correct: prev.correct + (isCorrect ? 1 : 0), total: prev.total + 1 }));
+      if (!isCorrect) setWrongIds(prev => new Set(prev).add(questions[current].id));
     }
   };
 
@@ -68,27 +94,101 @@ export default function QuestionPracticePage() {
     setCurrent(prev => prev + 1);
   };
 
+  const restart = (wrongOnly = false) => {
+    const pool = wrongOnly ? allQuestions.filter(q => wrongIds.has(q.id)) : allQuestions;
+    setQuestions(pool);
+    setRetryWrongOnly(wrongOnly);
+    setCurrent(0);
+    setScore({ correct: 0, total: 0 });
+    setWrongIds(new Set());
+    setSelected(null);
+    setResult(null);
+    setShowExplanation(false);
+  };
+
   if (loading) return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
-  if (questions.length === 0) return <div className="text-center py-20 text-muted-foreground">No questions found for this topic.</div>;
+  if (questions.length === 0 && allQuestions.length === 0) return <div className="text-center py-20 text-muted-foreground">No questions found for this topic.</div>;
 
   const q = questions[current];
-  if (!q) return (
-    <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-      <h2 className="text-3xl font-bold mb-4">Practice Complete!</h2>
-      <p className="text-lg text-muted-foreground mb-4">Score: {score.correct}/{score.total} ({score.total > 0 ? Math.round(score.correct/score.total*100) : 0}%)</p>
-      <Button onClick={() => { setCurrent(0); setScore({ correct: 0, total: 0 }); }}>Try Again</Button>
-    </div>
-  );
 
-  const progress = ((current) / questions.length) * 100;
+  // Completion screen
+  if (!q) {
+    const pct = score.total > 0 ? Math.round(score.correct / score.total * 100) : 0;
+    const passed = pct >= 70;
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        {passed
+          ? <Trophy className="h-16 w-16 mx-auto mb-4 text-warning" />
+          : <FlaskConical className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />}
+        <h2 className="text-3xl font-bold mb-2">{retryWrongOnly ? 'Retry Complete!' : 'Practice Complete!'}</h2>
+        <p className="text-lg text-muted-foreground mb-2">
+          Score: {score.correct}/{score.total} ({pct}%)
+        </p>
+        <Badge variant={passed ? 'success' : 'destructive'} className="text-sm mb-6">
+          {passed ? 'Great job!' : 'Keep practising'}
+        </Badge>
+
+        {/* Difficulty breakdown */}
+        {stats && (
+          <div className="flex justify-center gap-4 mb-8 text-sm">
+            <span className="text-success">{stats.easy} Easy</span>
+            <span className="text-warning">{stats.medium} Medium</span>
+            <span className="text-destructive">{stats.hard} Hard</span>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Button variant="outline" onClick={() => restart(false)}>
+            <RefreshCw className="h-4 w-4 mr-2" />Try Again
+          </Button>
+          {wrongIds.size > 0 && (
+            <Button onClick={() => restart(true)}>
+              <XCircle className="h-4 w-4 mr-2" />Retry {wrongIds.size} Wrong
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const progress = (current / questions.length) * 100;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      {/* Back link */}
+      {certificationId && (
+        <Link
+          to={`/courses/${certificationId}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to course
+        </Link>
+      )}
+
+      {/* Mode Banner */}
+      <div className="flex items-center gap-2 mb-6 px-3 py-2 rounded-lg bg-success/10 border border-success/30 text-success text-sm font-medium">
+        <FlaskConical className="h-4 w-4 shrink-0" />
+        <span>{retryLabel ? `Retrying: ${retryLabel}` : 'Practice Mode — correct answer revealed immediately after each submission.'}</span>
+      </div>
+
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm text-muted-foreground">Question {current + 1} of {questions.length}</span>
-        <Badge variant="secondary">Score: {score.correct}/{score.total}</Badge>
+        <div className="flex items-center gap-2">
+          {retryWrongOnly && <Badge variant="warning">Wrong Only</Badge>}
+          <Badge variant="secondary">Score: {score.correct}/{score.total}</Badge>
+        </div>
       </div>
       <Progress value={progress} className="mb-8" />
+
+      {/* Difficulty stats bar */}
+      {stats && current === 0 && (
+        <div className="flex gap-3 mb-4 text-xs text-muted-foreground">
+          <span className="text-success font-medium">{stats.easy} Easy</span>
+          <span className="text-warning font-medium">{stats.medium} Medium</span>
+          <span className="text-destructive font-medium">{stats.hard} Hard</span>
+          <span className="ml-auto">{stats.total} total questions</span>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -110,6 +210,9 @@ export default function QuestionPracticePage() {
             )}
           </div>
           <CardTitle className="text-lg leading-relaxed">{q.questionText}</CardTitle>
+          {q.imageUrl && (
+            <img src={q.imageUrl} alt="Question illustration" className="mt-3 max-h-64 rounded-lg border border-border object-contain" />
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           {q.options.map(opt => {

@@ -3,6 +3,7 @@ using System;
 using ExamPrep.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExamPrep.Infrastructure.Migrations
 {
     [DbContext(typeof(ExamPrepDbContext))]
-    partial class ExamPrepDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260423110942_AddQuestionImageUrl")]
+    partial class AddQuestionImageUrl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -514,39 +517,6 @@ namespace ExamPrep.Infrastructure.Migrations
                     b.ToTable("UserBookmarks");
                 });
 
-            modelBuilder.Entity("ExamPrep.Domain.Entities.UserLessonProgress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CertificationId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LessonId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ViewedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CertificationId");
-
-                    b.HasIndex("LessonId");
-
-                    b.HasIndex("UserId", "LessonId")
-                        .IsUnique();
-
-                    b.ToTable("UserLessonProgress");
-                });
-
             modelBuilder.Entity("ExamPrep.Domain.Entities.UserQuestionAttempt", b =>
                 {
                     b.Property<int>("Id")
@@ -934,25 +904,6 @@ namespace ExamPrep.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Question");
-                });
-
-            modelBuilder.Entity("ExamPrep.Domain.Entities.UserLessonProgress", b =>
-                {
-                    b.HasOne("ExamPrep.Domain.Entities.Certification", "Certification")
-                        .WithMany()
-                        .HasForeignKey("CertificationId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ExamPrep.Domain.Entities.Lesson", "Lesson")
-                        .WithMany()
-                        .HasForeignKey("LessonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Certification");
-
-                    b.Navigation("Lesson");
                 });
 
             modelBuilder.Entity("ExamPrep.Domain.Entities.UserQuestionAttempt", b =>

@@ -52,13 +52,6 @@ catch (Exception ex)
     await File.WriteAllTextAsync(logPath, $"{DateTime.UtcNow}\n{ex}");
 }
 
-// Temp diagnostic endpoint — remove after fixing startup error
-app.MapGet("/startup-error", async () =>
-{
-    var logPath = Path.Combine(AppContext.BaseDirectory, "startup-error.txt");
-    return File.Exists(logPath) ? await File.ReadAllTextAsync(logPath) : "No startup error logged.";
-});
-
 app.UseSwagger();
 app.UseSwaggerUI();
 

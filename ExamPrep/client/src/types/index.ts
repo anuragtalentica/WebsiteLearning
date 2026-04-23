@@ -39,6 +39,7 @@ export interface Topic {
 export interface Question {
   id: number;
   questionText: string;
+  imageUrl?: string;
   difficultyLevel: number;
   options: Option[];
 }
@@ -229,6 +230,25 @@ export interface CategoryStats {
   category: string;
   attempted: number;
   correct: number;
+}
+
+// ── Topic Stats ──
+export interface TopicStats {
+  easy: number;
+  medium: number;
+  hard: number;
+  total: number;
+}
+
+// ── Course Progress ──
+export interface CourseProgress {
+  certificationId: number;
+  certificationName: string;
+  certificationCode: string;
+  vendor: string;
+  totalLessons: number;
+  completedLessons: number;
+  percentComplete: number;
 }
 
 // ── Bookmarks ──

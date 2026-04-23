@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiClient from '@/api/apiClient';
-import type { ApiResponse, Dashboard, TestAttempt, Bookmark } from '@/types';
+import type { ApiResponse, Dashboard, TestAttempt, Bookmark, CourseProgress } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { Target, CheckCircle, XCircle, FlaskConical, Trophy, Clock, BookOpen, MinusCircle, BarChart2, Bookmark as BookmarkIcon, BookmarkX } from 'lucide-react';
+import { Target, CheckCircle, XCircle, FlaskConical, Trophy, Clock, BookOpen, MinusCircle, BarChart2, Bookmark as BookmarkIcon, BookmarkX, GraduationCap } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -19,16 +19,19 @@ export default function DashboardPage() {
   const [showAllAttempts, setShowAllAttempts] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [expandedBookmark, setExpandedBookmark] = useState<number | null>(null);
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
 
   useEffect(() => {
     Promise.all([
       apiClient.get<ApiResponse<Dashboard>>('/dashboard'),
       apiClient.get<ApiResponse<TestAttempt[]>>('/mocktests/attempts'),
       apiClient.get<ApiResponse<Bookmark[]>>('/bookmarks'),
-    ]).then(([dashRes, attRes, bkRes]) => {
+      apiClient.get<ApiResponse<CourseProgress[]>>('/progress/courses'),
+    ]).then(([dashRes, attRes, bkRes, progRes]) => {
       if (dashRes.data.data) setDashboard(dashRes.data.data);
       if (attRes.data.data) setAttempts(attRes.data.data);
       if (bkRes.data.data) setBookmarks(bkRes.data.data);
+      if (progRes.data.data) setCourseProgress(progRes.data.data);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -60,6 +63,7 @@ export default function DashboardPage() {
           { label: 'Accuracy', value: `${dashboard?.accuracyPercentage || 0}%`, icon: Target, color: 'text-success' },
           { label: 'Tests Taken', value: dashboard?.testsTaken || 0, icon: FlaskConical, color: 'text-warning' },
           { label: 'Tests Passed', value: dashboard?.testsPassed || 0, icon: Trophy, color: 'text-primary' },
+          { label: 'Courses Started', value: courseProgress.length, icon: GraduationCap, color: 'text-primary' },
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card>
@@ -124,6 +128,32 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
+
+      {/* Courses Started */}
+      {courseProgress.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" /> Courses in Progress
+              <Badge variant="secondary">{courseProgress.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {courseProgress.map(cp => (
+              <div key={cp.certificationId}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="font-medium truncate">{cp.certificationCode} — {cp.certificationName}</span>
+                  <span className="text-muted-foreground shrink-0 ml-3">{cp.completedLessons}/{cp.totalLessons} lessons</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Progress value={cp.percentComplete} className="flex-1 h-2" />
+                  <span className="text-xs font-semibold w-10 text-right">{cp.percentComplete}%</span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Test History */}
       <Card>

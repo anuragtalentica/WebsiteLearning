@@ -6,6 +6,7 @@ public class Question
     public int TopicId { get; set; }
     public string QuestionText { get; set; } = string.Empty;
     public string? Explanation { get; set; }
+    public string? ImageUrl { get; set; }
     public int DifficultyLevel { get; set; } = 1;
     public int? LessonId { get; set; }
     public int? CertificationId { get; set; }

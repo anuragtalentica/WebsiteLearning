@@ -5,15 +5,20 @@ import type { ApiResponse, CertificationDetail, Module as ModuleType, ModuleDeta
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, ChevronDown, ChevronRight, FileText, FlaskConical } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { BookOpen, ChevronDown, ChevronRight, FileText, FlaskConical, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CourseDetailPage() {
   const { certId } = useParams<{ certId: string }>();
+  const { isAuthenticated } = useAuth();
   const [cert, setCert] = useState<CertificationDetail | null>(null);
   const [modules, setModules] = useState<ModuleType[]>([]);
   const [expandedModule, setExpandedModule] = useState<number | null>(null);
   const [moduleDetails, setModuleDetails] = useState<Record<number, ModuleDetail>>({});
   const [loading, setLoading] = useState(true);
+  const [viewedLessonIds, setViewedLessonIds] = useState<Set<number>>(new Set());
+  const [totalLessons, setTotalLessons] = useState(0);
 
   useEffect(() => {
     if (!certId) return;
@@ -22,9 +27,18 @@ export default function CourseDetailPage() {
       apiClient.get<ApiResponse<ModuleType[]>>(`/modules/certification/${certId}`),
     ]).then(([certRes, modRes]) => {
       if (certRes.data.data) setCert(certRes.data.data);
-      if (modRes.data.data) setModules(modRes.data.data);
+      if (modRes.data.data) {
+        setModules(modRes.data.data);
+        setTotalLessons(modRes.data.data.reduce((sum, m) => sum + m.lessonCount, 0));
+      }
     }).finally(() => setLoading(false));
   }, [certId]);
+
+  useEffect(() => {
+    if (!certId || !isAuthenticated) return;
+    apiClient.get<ApiResponse<number[]>>(`/progress/lessons/ids?certificationId=${certId}`)
+      .then(r => { if (r.data.data) setViewedLessonIds(new Set(r.data.data)); });
+  }, [certId, isAuthenticated]);
 
   const toggleModule = async (moduleId: number) => {
     if (expandedModule === moduleId) { setExpandedModule(null); return; }
@@ -49,6 +63,16 @@ export default function CourseDetailPage() {
         <h1 className="text-3xl font-bold mb-2">{cert.code} - {cert.name}</h1>
         <p className="text-muted-foreground mb-1">by {cert.vendor}</p>
         <p className="text-sm text-muted-foreground max-w-3xl">{cert.description}</p>
+
+        {isAuthenticated && totalLessons > 0 && (
+          <div className="mt-4 max-w-sm">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+              <span>Course Progress</span>
+              <span>{viewedLessonIds.size}/{totalLessons} lessons</span>
+            </div>
+            <Progress value={Math.round(viewedLessonIds.size / totalLessons * 100)} className="h-2" />
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -71,8 +95,10 @@ export default function CourseDetailPage() {
                   {moduleDetails[mod.id].lessons.map(lesson => (
                     <Link key={lesson.id} to={`/lessons/${lesson.id}`}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-secondary/50 transition-colors">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      {lesson.title}
+                      {viewedLessonIds.has(lesson.id)
+                        ? <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                        : <FileText className="h-4 w-4 text-muted-foreground shrink-0" />}
+                      <span className={viewedLessonIds.has(lesson.id) ? 'text-success' : ''}>{lesson.title}</span>
                     </Link>
                   ))}
                 </div>

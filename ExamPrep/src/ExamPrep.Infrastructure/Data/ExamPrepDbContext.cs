@@ -36,6 +36,9 @@ public class ExamPrepDbContext : IdentityDbContext<IdentityUser>
     // New — Bookmarks
     public DbSet<UserBookmark> UserBookmarks => Set<UserBookmark>();
 
+    // New — Lesson Progress
+    public DbSet<UserLessonProgress> UserLessonProgress => Set<UserLessonProgress>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -214,6 +217,20 @@ public class ExamPrepDbContext : IdentityDbContext<IdentityUser>
                 .HasForeignKey(b => b.QuestionId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(b => new { b.UserId, b.QuestionId }).IsUnique();
+        });
+
+        // ── UserLessonProgress ──
+        builder.Entity<UserLessonProgress>(e =>
+        {
+            e.HasOne(p => p.Lesson)
+                .WithMany()
+                .HasForeignKey(p => p.LessonId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(p => p.Certification)
+                .WithMany()
+                .HasForeignKey(p => p.CertificationId)
+                .OnDelete(DeleteBehavior.NoAction);
+            e.HasIndex(p => new { p.UserId, p.LessonId }).IsUnique();
         });
     }
 }

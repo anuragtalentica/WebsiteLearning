@@ -84,7 +84,7 @@
 | 3.5.5 | Question explanation field | ✅ Done | Already on entity, exposed in admin |
 | 3.5.6 | Download CSV template for bulk import | ✅ Done | Columns: Question, A, B, C, D, Correct, Explanation, Difficulty, TopicId |
 | 3.5.7 | Bulk import via CSV paste | ✅ Done | Paste CSV into textarea, click Import |
-| 3.5.8 | Question image field (URL) | ⬜ Pending | Separate image URL field per question |
+| 3.5.8 | Question image field (URL) | ✅ Done | Separate image URL field per question |
 | 3.5.9 | Image storage integration (Cloudinary) | 🔜 Future | Skip for now, use URL field |
 
 ### 3.6 Mock Tests Management
@@ -137,7 +137,7 @@
 | 4.3.1 | Practice questions by topic | ✅ Done | `/practice/:topicId` |
 | 4.3.2 | Show answer immediately after each question | ✅ Done | Practice mode behavior |
 | 4.3.3 | Show explanation after answering | ✅ Done | "See Explanation" button revealed after submitting answer |
-| 4.3.4 | Practice vs Exam mode distinction in UI | ⬜ Pending | Needs clearer UX separation |
+| 4.3.4 | Practice vs Exam mode distinction in UI | ✅ Done | Mode banner shown at top of each page |
 
 ### 4.4 Mock Tests (Exam Mode)
 | # | Requirement | Status | Notes |
@@ -157,8 +157,8 @@
 | 4.5.1 | Questions attempted + accuracy % | ✅ Done | `/dashboard` |
 | 4.5.2 | Tests taken + passed count | ✅ Done | |
 | 4.5.3 | Recent activity | ✅ Done | |
-| 4.5.4 | Courses started | ⬜ Pending | Requires UserLessonProgress entity |
-| 4.5.5 | % complete per course (lessons viewed + questions attempted) | ⬜ Pending | Requires progress tracking |
+| 4.5.4 | Courses started | ✅ Done | Count + list on dashboard |
+| 4.5.5 | % complete per course (lessons viewed + questions attempted) | ✅ Done | Progress bar on dashboard + course detail page |
 | 4.5.6 | Full test history with scores | ✅ Done | Dashboard shows all attempts with correct/wrong/skipped breakdown, show all toggle |
 | 4.5.7 | Category performance stats | ✅ Done | |
 
@@ -202,13 +202,13 @@
 
 | # | Requirement | Status | Notes |
 |---|---|---|---|
-| 6.1 | `UserLessonProgress` entity + migration | ⬜ Pending | Track lessons viewed per user |
+| 6.1 | `UserLessonProgress` entity + migration | ✅ Done | Migration `AddUserLessonProgress` applied |
 | 6.2 | `UserBookmark` entity + migration | ✅ Done | EF migration `AddUserBookmark` applied |
 | 6.3 | Leaderboard endpoint | ✅ Done | `GET /api/leaderboard` and `/api/leaderboard/certification/{id}` |
-| 6.4 | Course progress endpoint | ⬜ Pending | % complete calculation |
+| 6.4 | Course progress endpoint | ✅ Done | `GET /api/progress/courses` and `/api/progress/lessons/ids` |
 | 6.5 | Detailed test result endpoint (question-by-question) | ✅ Done | `GET /api/mocktests/attempts/{id}/review` |
 | 6.6 | Admin: Modules & Lessons CRUD endpoints | ✅ Done | `/api/admin/modules` and `/api/admin/lessons` |
-| 6.7 | Remove `/startup-error` diagnostic endpoint | ⬜ Pending | Clean up before next major release |
+| 6.7 | Remove `/startup-error` diagnostic endpoint | ✅ Done | Removed from Program.cs |
 
 ---
 
@@ -230,3 +230,39 @@
 | ⚪ Future | Email notifications | Large |
 | ⚪ Future | Image storage (Cloudinary) | Medium |
 | ⚪ Future | Multiple admin roles | Medium |
+
+---
+
+## 8. MVP Readiness — Must-Fix Before Launch
+
+> Features and issues identified during full application review (2026-04-23). These must be resolved before the platform is considered production-ready for real users.
+
+### 8.1 Security Issues (Critical)
+| # | Issue | Status | Notes |
+|---|---|---|---|
+| 8.1.1 | Remove dev reset token exposed in ForgotPasswordPage UI | ⬜ Pending | Current code renders raw token in the browser — a severe security leak. Must be replaced with "Check your email" message. |
+| 8.1.2 | Sanitize HTML lesson content before rendering | ⬜ Pending | `dangerouslySetInnerHTML` in LessonPage is an XSS vector if admin input is not trusted. Use DOMPurify client-side. |
+| 8.1.3 | Rate limiting on auth endpoints | ⬜ Pending | `/api/auth/login` and `/api/auth/register` are open to brute-force. Add ASP.NET Core rate limiting middleware. |
+
+### 8.2 UX Gaps (High Priority)
+| # | Feature | Status | Notes |
+|---|---|---|---|
+| 8.2.1 | 404 Not Found page | ⬜ Pending | Unknown routes render blank. Add a catch-all `*` route in App.tsx pointing to a `NotFoundPage`. |
+| 8.2.2 | Browser unload warning during mock test | ⬜ Pending | Navigating away or closing tab mid-exam loses all progress silently. Add `beforeunload` event listener in MockTestTakePage. |
+| 8.2.3 | Toast/snackbar notification system | ⬜ Pending | Admin saves and deletes are completely silent (no success/error feedback). Add a lightweight global toast system (e.g. sonner or react-hot-toast). |
+| 8.2.4 | Password strength guidance on Register | ⬜ Pending | Registration fails if password doesn't meet complexity rules, but users see no requirements. Show min-length and complexity hint below the password field. |
+| 8.2.5 | User's best score shown on Mock Tests page | ⬜ Pending | Returning users cannot tell at a glance which tests they've taken or their best score. Fetch and overlay past attempt results on test cards. |
+| 8.2.6 | Empty state pages | ⬜ Pending | Several list pages (bookmarks, test history, courses in progress) show blank or spinner indefinitely when empty. Add explicit empty-state illustrations/messages. |
+
+### 8.3 Branding / SEO
+| # | Feature | Status | Notes |
+|---|---|---|---|
+| 8.3.1 | Favicon | ⬜ Pending | Browser tab shows generic icon. Add `/public/favicon.ico` and link in `index.html`. |
+| 8.3.2 | `<meta>` title and description tags | ⬜ Pending | Every page has the same default title. Use `document.title` per page or react-helmet for SEO. |
+| 8.3.3 | Open Graph tags for social sharing | ⬜ Pending | No og:title / og:image in `<head>`. Add to `index.html` at minimum. |
+
+### 8.4 Content Accuracy
+| # | Feature | Status | Notes |
+|---|---|---|---|
+| 8.4.1 | AboutPage — replace hardcoded cert list with dynamic data | ⬜ Pending | AboutPage lists specific certs in JSX that won't reflect DB changes. Fetch `/api/certifications` and render dynamically. |
+| 8.4.2 | Terms of Service and Privacy Policy — real content | ⬜ Pending | Current pages have placeholder text. Must have real legal content before accepting real users. |

@@ -1,23 +1,49 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import apiClient from '@/api/apiClient';
 import type { ApiResponse, LessonDetail, ExternalLink as ExtLink } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Code, ExternalLink, BookOpen } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Code, ExternalLink, BookOpen, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
+interface LessonNav {
+  prevId?: number;
+  prevTitle?: string;
+  nextId?: number;
+  nextTitle?: string;
+}
 
 export default function LessonPage() {
   const { lessonId } = useParams<{ lessonId: string }>();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
+  const [nav, setNav] = useState<LessonNav>({});
   const [loading, setLoading] = useState(true);
+  const [marked, setMarked] = useState(false);
 
   useEffect(() => {
     if (!lessonId) return;
-    apiClient.get<ApiResponse<LessonDetail>>(`/lessons/${lessonId}`)
-      .then(r => { if (r.data.data) setLesson(r.data.data); })
-      .finally(() => setLoading(false));
+    setLoading(true);
+    setMarked(false);
+    Promise.all([
+      apiClient.get<ApiResponse<LessonDetail>>(`/lessons/${lessonId}`),
+      apiClient.get<ApiResponse<LessonNav>>(`/lessons/${lessonId}/navigation`),
+    ]).then(([lesRes, navRes]) => {
+      if (lesRes.data.data) setLesson(lesRes.data.data);
+      if (navRes.data.data) setNav(navRes.data.data);
+    }).finally(() => setLoading(false));
   }, [lessonId]);
+
+  // Mark lesson as viewed when loaded (logged-in users only)
+  useEffect(() => {
+    if (!lessonId || !isAuthenticated) return;
+    apiClient.post(`/progress/lessons/${lessonId}`)
+      .then(() => setMarked(true))
+      .catch(() => { /* silent — not critical */ });
+  }, [lessonId, isAuthenticated]);
 
   if (loading) return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   if (!lesson) return <div className="text-center py-20 text-muted-foreground">Lesson not found</div>;
@@ -32,9 +58,14 @@ export default function LessonPage() {
       </Link>
 
       <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
-      <div className="flex gap-2 mb-8">
+      <div className="flex gap-2 mb-8 flex-wrap">
         <Badge variant="secondary"><BookOpen className="h-3 w-3 mr-1" />Lesson {lesson.orderIndex}</Badge>
         {lesson.questionCount > 0 && <Badge variant="info">{lesson.questionCount} practice questions</Badge>}
+        {marked && (
+          <Badge variant="success" className="flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />Completed
+          </Badge>
+        )}
       </div>
 
       {/* Content — HTML if it starts with a tag, otherwise plain text */}
@@ -95,11 +126,56 @@ export default function LessonPage() {
         </Card>
       )}
 
-      {/* Navigation */}
-      <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={() => window.history.back()}>Previous</Button>
-        <Button variant="outline" disabled>Next Lesson</Button>
+      {/* Inline prev/next navigation */}
+      <div className="flex justify-between mt-10 gap-3 mb-24">
+        <Button
+          variant="outline"
+          className="flex-1 max-w-xs justify-start gap-2"
+          disabled={!nav.prevId}
+          onClick={() => nav.prevId && navigate(`/lessons/${nav.prevId}`)}
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0" />
+          <span className="truncate">{nav.prevTitle || 'Previous'}</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 max-w-xs justify-end gap-2"
+          disabled={!nav.nextId}
+          onClick={() => nav.nextId && navigate(`/lessons/${nav.nextId}`)}
+        >
+          <span className="truncate">{nav.nextTitle || 'Next'}</span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </Button>
       </div>
+
+      {/* Sticky completion bar (logged-in users only) */}
+      {isAuthenticated && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-sm px-4 py-3">
+          <div className="mx-auto max-w-4xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              {marked ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-success shrink-0" />
+                  <span className="text-success font-medium">Lesson marked as complete</span>
+                </>
+              ) : (
+                <span className="text-muted-foreground">Reading in progress…</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {nav.nextId ? (
+                <Button size="sm" className="gap-1" onClick={() => navigate(`/lessons/${nav.nextId!}`)}>
+                  Next Lesson <ChevronRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => navigate(-1)}>
+                  Back to Course
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

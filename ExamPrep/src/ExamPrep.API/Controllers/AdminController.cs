@@ -161,6 +161,7 @@ public class AdminController : ControllerBase
                 Id = q.Id,
                 QuestionText = q.QuestionText,
                 Explanation = q.Explanation,
+                ImageUrl = q.ImageUrl,
                 DifficultyLevel = q.DifficultyLevel,
                 TopicId = q.TopicId,
                 Options = q.Options.OrderBy(o => o.OrderIndex).Select(o => new AdminOptionDto
@@ -183,6 +184,7 @@ public class AdminController : ControllerBase
         {
             QuestionText = dto.QuestionText,
             Explanation = dto.Explanation,
+            ImageUrl = dto.ImageUrl,
             DifficultyLevel = dto.DifficultyLevel,
             TopicId = dto.TopicId,
             CreatedAt = DateTime.UtcNow,
@@ -206,6 +208,7 @@ public class AdminController : ControllerBase
 
         question.QuestionText = dto.QuestionText;
         question.Explanation = dto.Explanation;
+        question.ImageUrl = dto.ImageUrl;
         question.DifficultyLevel = dto.DifficultyLevel;
 
         // Replace options
@@ -534,6 +537,7 @@ public class AdminQuestionDto
     public int Id { get; set; }
     public string QuestionText { get; set; } = "";
     public string? Explanation { get; set; }
+    public string? ImageUrl { get; set; }
     public int DifficultyLevel { get; set; } = 1;
     public int TopicId { get; set; }
     public List<AdminOptionDto> Options { get; set; } = new();

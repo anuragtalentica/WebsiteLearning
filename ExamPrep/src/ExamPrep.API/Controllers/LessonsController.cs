@@ -1,8 +1,10 @@
 using ExamPrep.API.Models;
 using ExamPrep.Application.DTOs;
 using ExamPrep.Application.Interfaces;
+using ExamPrep.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExamPrep.API.Controllers;
 
@@ -11,10 +13,12 @@ namespace ExamPrep.API.Controllers;
 public class LessonsController : ControllerBase
 {
     private readonly ILessonService _lessonService;
+    private readonly ExamPrepDbContext _db;
 
-    public LessonsController(ILessonService lessonService)
+    public LessonsController(ILessonService lessonService, ExamPrepDbContext db)
     {
         _lessonService = lessonService;
+        _db = db;
     }
 
     [HttpGet("module/{moduleId}")]
@@ -31,6 +35,32 @@ public class LessonsController : ControllerBase
         if (lesson == null)
             return NotFound(ApiResponse<LessonDetailDto>.Fail("Lesson not found"));
         return Ok(ApiResponse<LessonDetailDto>.Ok(lesson));
+    }
+
+    // GET /api/lessons/{id}/navigation — prev/next lesson IDs within the same module
+    [HttpGet("{id}/navigation")]
+    public async Task<ActionResult<ApiResponse<LessonNavDto>>> GetNavigation(int id)
+    {
+        var lesson = await _db.Lessons.FindAsync(id);
+        if (lesson == null) return NotFound(ApiResponse<LessonNavDto>.Fail("Lesson not found"));
+
+        var siblings = await _db.Lessons
+            .Where(l => l.ModuleId == lesson.ModuleId)
+            .OrderBy(l => l.OrderIndex)
+            .Select(l => new { l.Id, l.Title, l.OrderIndex })
+            .ToListAsync();
+
+        var idx = siblings.FindIndex(l => l.Id == id);
+        var prev = idx > 0 ? siblings[idx - 1] : null;
+        var next = idx < siblings.Count - 1 ? siblings[idx + 1] : null;
+
+        return Ok(ApiResponse<LessonNavDto>.Ok(new LessonNavDto
+        {
+            PrevId = prev?.Id,
+            PrevTitle = prev?.Title,
+            NextId = next?.Id,
+            NextTitle = next?.Title
+        }));
     }
 
     [HttpPost]
@@ -60,4 +90,12 @@ public class LessonsController : ControllerBase
             return NotFound(ApiResponse<bool>.Fail("Lesson not found"));
         return Ok(ApiResponse<bool>.Ok(true));
     }
+}
+
+public class LessonNavDto
+{
+    public int? PrevId { get; set; }
+    public string? PrevTitle { get; set; }
+    public int? NextId { get; set; }
+    public string? NextTitle { get; set; }
 }

@@ -23,7 +23,7 @@ interface AdminStats {
 interface AdminTopic { id: number; name: string; orderIndex: number; certificationId: number; }
 interface AdminOption { id: number; optionText: string; isCorrect: boolean; orderIndex: number; }
 interface AdminQuestion {
-  id: number; questionText: string; explanation?: string;
+  id: number; questionText: string; explanation?: string; imageUrl?: string;
   difficultyLevel: number; topicId: number; options: AdminOption[];
 }
 interface AdminMockTest {
@@ -274,6 +274,7 @@ function QuestionsTab() {
   const [showBulk, setShowBulk] = useState(false);
   const [bulkJson, setBulkJson] = useState('');
   const [bulkError, setBulkError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     apiClient.get<ApiResponse<Certification[]>>('/certifications').then(r => {
@@ -305,7 +306,7 @@ function QuestionsTab() {
   };
 
   const blankQuestion = (): Partial<AdminQuestion> => ({
-    questionText: '', explanation: '', difficultyLevel: 1, topicId: selectedTopic ?? 0,
+    questionText: '', explanation: '', imageUrl: '', difficultyLevel: 1, topicId: selectedTopic ?? 0,
     options: [
       { id: 0, optionText: '', isCorrect: true, orderIndex: 1 },
       { id: 0, optionText: '', isCorrect: false, orderIndex: 2 },
@@ -501,6 +502,19 @@ function QuestionsTab() {
               </div>
             </div>
 
+            <div>
+              <label className="text-xs text-muted-foreground">Image URL (optional)</label>
+              <Input
+                value={editing.imageUrl ?? ''}
+                onChange={e => setEditing(p => ({ ...p, imageUrl: e.target.value }))}
+                className="mt-1 h-8"
+                placeholder="https://example.com/image.png"
+              />
+              {editing.imageUrl && (
+                <img src={editing.imageUrl} alt="Question preview" className="mt-2 max-h-40 rounded border border-border object-contain" />
+              )}
+            </div>
+
             <div className="flex gap-2 justify-end">
               <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>Cancel</Button>
               <Button size="sm" onClick={save}>Save</Button>
@@ -509,11 +523,23 @@ function QuestionsTab() {
         </Card>
       )}
 
+      {/* Search */}
+      {questions.length > 0 && !editing && (
+        <Input
+          placeholder="Search questions..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          className="h-9"
+        />
+      )}
+
       {/* Questions list */}
       {questions.length > 0 && (
         <Card>
           <CardContent className="pt-4 space-y-3">
-            {questions.map((q, i) => (
+            {questions.filter(q =>
+              !searchTerm || q.questionText.toLowerCase().includes(searchTerm.toLowerCase())
+            ).map((q, i) => (
               <div key={q.id} className="border border-border rounded-lg p-3">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium">{i + 1}. {q.questionText}</p>

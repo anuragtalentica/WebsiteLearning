@@ -15,16 +15,26 @@ const difficultyVariant = (d?: string) => {
   switch (d) { case 'Beginner': return 'success' as const; case 'Intermediate': return 'warning' as const; case 'Advanced': return 'destructive' as const; default: return 'secondary' as const; }
 };
 
+interface PlatformStats {
+  certifications: number;
+  practiceQuestions: number;
+  mockTests: number;
+  learningPaths: number;
+}
+
 export default function HomePage() {
   const [certifications, setCertifications] = useState<Certification[]>([]);
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.get<ApiResponse<Certification[]>>('/certifications')
-      .then(certRes => {
-        if (certRes.data.data) setCertifications(certRes.data.data);
-      })
-      .finally(() => setLoading(false));
+    Promise.all([
+      apiClient.get<ApiResponse<Certification[]>>('/certifications'),
+      apiClient.get<ApiResponse<PlatformStats>>('/stats'),
+    ]).then(([certRes, statsRes]) => {
+      if (certRes.data.data) setCertifications(certRes.data.data);
+      if (statsRes.data.data) setPlatformStats(statsRes.data.data);
+    }).finally(() => setLoading(false));
   }, []);
 
   return (
@@ -50,10 +60,10 @@ export default function HomePage() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="mt-16 grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'Certifications', value: certifications.length, icon: GraduationCap },
-              { label: 'Practice Questions', value: '120+', icon: BookOpen },
-              { label: 'Mock Tests', value: '3+', icon: FlaskConical },
-              { label: 'Learning Paths', value: '2+', icon: Newspaper },
+              { label: 'Certifications', value: platformStats?.certifications ?? certifications.length, icon: GraduationCap },
+              { label: 'Practice Questions', value: platformStats ? `${platformStats.practiceQuestions}+` : '...', icon: BookOpen },
+              { label: 'Mock Tests', value: platformStats ? `${platformStats.mockTests}+` : '...', icon: FlaskConical },
+              { label: 'Learning Paths', value: platformStats ? `${platformStats.learningPaths}+` : '...', icon: Newspaper },
             ].map((s, i) => (
               <div key={i} className="rounded-xl border border-border bg-card/50 p-4 text-center">
                 <s.icon className="h-5 w-5 text-primary mx-auto mb-2" />
@@ -78,7 +88,7 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {certifications.map((cert, i) => (
+              {certifications.slice(0, 6).map((cert, i) => (
                 <motion.div key={cert.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
                   <Link to={`/courses/${cert.id}`}>
                     <Card className="h-full hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group">

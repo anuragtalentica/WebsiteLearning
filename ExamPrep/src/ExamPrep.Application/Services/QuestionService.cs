@@ -62,6 +62,7 @@ public class QuestionService : IQuestionService
     {
         Id = q.Id,
         QuestionText = q.QuestionText,
+        ImageUrl = q.ImageUrl,
         DifficultyLevel = q.DifficultyLevel,
         Options = q.Options.Select(o => new OptionDto
         {
