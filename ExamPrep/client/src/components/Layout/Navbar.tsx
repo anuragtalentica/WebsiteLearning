@@ -93,7 +93,7 @@ export default function Navbar() {
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border bg-card shadow-lg py-1 z-50">
+                <div className="absolute right-0 top-full mt-2 w-[min(14rem,calc(100vw-1rem))] rounded-lg border border-border bg-card shadow-lg py-1 z-50">
                   {/* User info */}
                   <div className="px-4 py-3 border-b border-border">
                     <p className="text-sm font-medium truncate">{user?.fullName}</p>

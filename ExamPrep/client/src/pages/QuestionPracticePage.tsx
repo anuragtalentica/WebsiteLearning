@@ -211,7 +211,7 @@ export default function QuestionPracticePage() {
           </div>
           <CardTitle className="text-lg leading-relaxed">{q.questionText}</CardTitle>
           {q.imageUrl && (
-            <img src={q.imageUrl} alt="Question illustration" className="mt-3 max-h-64 rounded-lg border border-border object-contain" />
+            <img src={q.imageUrl} alt="Question illustration" className="mt-3 max-h-40 sm:max-h-64 w-full rounded-lg border border-border object-contain" />
           )}
         </CardHeader>
         <CardContent className="space-y-3">

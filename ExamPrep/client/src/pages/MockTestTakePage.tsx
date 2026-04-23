@@ -149,14 +149,15 @@ export default function MockTestTakePage() {
       )}
 
       {/* Mode Banner */}
-      <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium">
+      <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs sm:text-sm font-medium">
         <ShieldAlert className="h-4 w-4 shrink-0" />
-        <span>Exam Mode — answers are hidden until you review results. Timer counts down.</span>
+        <span className="hidden sm:inline">Exam Mode — answers are hidden until you review results. Timer counts down.</span>
+        <span className="sm:hidden">Exam Mode — answers hidden until results.</span>
       </div>
 
       {/* Timer Bar */}
-      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card border border-border">
-        <h2 className="font-semibold text-sm truncate">{test.title}</h2>
+      <div className="flex items-center justify-between mb-4 p-3 rounded-lg bg-card border border-border gap-2">
+        <h2 className="font-semibold text-sm truncate flex-1">{test.title}</h2>
         <div className={cn("flex items-center gap-1.5 font-mono text-sm font-semibold", timeLeft < 60 ? 'text-destructive animate-pulse' : timeLeft < 300 ? 'text-warning' : 'text-foreground')}>
           <Clock className="h-4 w-4" />
           {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
@@ -191,18 +192,18 @@ export default function MockTestTakePage() {
       </Card>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={() => setCurrent(prev => Math.max(0, prev - 1))} disabled={current === 0}>
-          <ChevronLeft className="h-4 w-4 mr-1" />Previous
+      <div className="flex items-center justify-between gap-2">
+        <Button variant="outline" size="sm" onClick={() => setCurrent(prev => Math.max(0, prev - 1))} disabled={current === 0}>
+          <ChevronLeft className="h-4 w-4 mr-1" /><span className="hidden sm:inline">Previous</span><span className="sm:hidden">Prev</span>
         </Button>
-        <span className="text-sm text-muted-foreground">{answeredCount}/{test.questions.length} answered</span>
+        <span className="text-xs sm:text-sm text-muted-foreground shrink-0">{answeredCount}/{test.questions.length} answered</span>
         {current < test.questions.length - 1 ? (
-          <Button variant="outline" onClick={() => setCurrent(prev => prev + 1)}>
+          <Button variant="outline" size="sm" onClick={() => setCurrent(prev => prev + 1)}>
             Next<ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         ) : (
-          <Button onClick={handleSubmitClick} disabled={submitting} className="gap-1">
-            <Send className="h-4 w-4" />{submitting ? 'Submitting...' : 'Submit Test'}
+          <Button onClick={handleSubmitClick} disabled={submitting} size="sm" className="gap-1">
+            <Send className="h-4 w-4" />{submitting ? 'Submitting...' : 'Submit'}
           </Button>
         )}
       </div>
@@ -215,10 +216,10 @@ export default function MockTestTakePage() {
             <span className="text-xs text-warning">{unansweredCount} unanswered</span>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-15 gap-1.5">
           {test.questions.map((tq, i) => (
             <button key={tq.id} onClick={() => setCurrent(i)}
-              className={cn("h-8 w-8 rounded text-xs font-medium transition-all",
+              className={cn("h-8 w-full rounded text-xs font-medium transition-all",
                 i === current ? 'bg-primary text-primary-foreground' :
                 answers[tq.questionId] ? 'bg-success/20 text-success border border-success/30' :
                 'bg-secondary text-secondary-foreground hover:bg-secondary/80')}>

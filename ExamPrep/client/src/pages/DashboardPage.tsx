@@ -67,10 +67,10 @@ export default function DashboardPage() {
         ].map((stat, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
             <Card>
-              <CardContent className="p-6 text-center">
-                <stat.icon className={`h-6 w-6 mx-auto mb-2 ${stat.color}`} />
-                <div className="text-3xl font-bold">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 ${stat.color}`} />
+                <div className="text-2xl sm:text-3xl font-bold">{stat.value}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
               </CardContent>
             </Card>
           </motion.div>

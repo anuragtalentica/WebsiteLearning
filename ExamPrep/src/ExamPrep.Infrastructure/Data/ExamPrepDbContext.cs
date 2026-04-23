@@ -39,6 +39,9 @@ public class ExamPrepDbContext : IdentityDbContext<IdentityUser>
     // New — Lesson Progress
     public DbSet<UserLessonProgress> UserLessonProgress => Set<UserLessonProgress>();
 
+    // Contact Messages
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

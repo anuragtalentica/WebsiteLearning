@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   LayoutDashboard, BookOpen, HelpCircle, ClipboardList,
-  Users, Plus, Pencil, Trash2, Upload, Download, X, Check, ChevronDown, Newspaper, Layers
+  Users, Plus, Pencil, Trash2, Upload, Download, X, Check, ChevronDown, Newspaper, Layers, Mail, Eye
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ interface AdminLesson {
 
 // ── Tab names ──────────────────────────────────────────────────────────
 
-type Tab = 'dashboard' | 'certifications' | 'questions' | 'mocktests' | 'news' | 'content' | 'users';
+type Tab = 'dashboard' | 'certifications' | 'questions' | 'mocktests' | 'news' | 'content' | 'users' | 'messages';
 
 // ── Main Component ─────────────────────────────────────────────────────
 
@@ -56,6 +56,7 @@ export default function AdminPage() {
     { id: 'news', label: 'News', icon: <Newspaper className="h-4 w-4" /> },
     { id: 'content', label: 'Content', icon: <Layers className="h-4 w-4" /> },
     { id: 'users', label: 'Users', icon: <Users className="h-4 w-4" /> },
+    { id: 'messages', label: 'Messages', icon: <Mail className="h-4 w-4" /> },
   ];
 
   return (
@@ -63,12 +64,12 @@ export default function AdminPage() {
       <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-border mb-6 overflow-x-auto">
+      <div className="flex gap-0.5 border-b border-border mb-6 overflow-x-auto scrollbar-none">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-4 py-2 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
               tab === t.id
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -86,6 +87,7 @@ export default function AdminPage() {
       {tab === 'news' && <NewsTab />}
       {tab === 'content' && <ContentTab />}
       {tab === 'users' && <UsersTab />}
+      {tab === 'messages' && <MessagesTab />}
     </div>
   );
 }
@@ -126,22 +128,24 @@ function DashboardTab() {
       <Card>
         <CardHeader><CardTitle className="text-base">Certifications Overview</CardTitle></CardHeader>
         <CardContent>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="pb-2">Code</th><th className="pb-2">Name</th><th className="pb-2">Topics</th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.popularCourses.map(c => (
-                <tr key={c.id} className="border-b border-border/50">
-                  <td className="py-2 font-mono text-xs">{c.code}</td>
-                  <td className="py-2">{c.name}</td>
-                  <td className="py-2">{c.topicCount}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-muted-foreground">
+                  <th className="pb-2">Code</th><th className="pb-2">Name</th><th className="pb-2">Topics</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {stats.popularCourses.map(c => (
+                  <tr key={c.id} className="border-b border-border/50">
+                    <td className="py-2 font-mono text-xs">{c.code}</td>
+                    <td className="py-2">{c.name}</td>
+                    <td className="py-2">{c.topicCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -227,6 +231,7 @@ function CertificationsTab() {
 
       <Card>
         <CardContent className="pt-4">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
@@ -255,6 +260,7 @@ function CertificationsTab() {
               ))}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -712,6 +718,7 @@ function MockTestsTab() {
 
       <Card>
         <CardContent className="pt-4">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
@@ -736,6 +743,7 @@ function MockTestsTab() {
               ))}
             </tbody>
           </table>
+          </div>
           {tests.length === 0 && <p className="text-center text-muted-foreground text-sm py-6">No mock tests yet.</p>}
         </CardContent>
       </Card>
@@ -814,6 +822,7 @@ function NewsTab() {
 
       <Card>
         <CardContent className="pt-4">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-muted-foreground">
@@ -840,6 +849,7 @@ function NewsTab() {
               ))}
             </tbody>
           </table>
+          </div>
           {news.length === 0 && <p className="text-center text-muted-foreground text-sm py-6">No news items yet.</p>}
         </CardContent>
       </Card>
@@ -1113,6 +1123,7 @@ function UsersTab() {
   return (
     <Card>
       <CardContent className="pt-4">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-muted-foreground">
@@ -1142,7 +1153,137 @@ function UsersTab() {
             ))}
           </tbody>
         </table>
+        </div>
         {users.length === 0 && <p className="text-center text-muted-foreground text-sm py-6">No users found.</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Messages Tab ───────────────────────────────────────────────────────
+
+interface ContactMsg {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  subject?: string;
+  message: string;
+  submittedAt: string;
+  isRead: boolean;
+}
+
+function MessagesTab() {
+  const [messages, setMessages] = useState<ContactMsg[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<number | null>(null);
+
+  const load = () => {
+    setLoading(true);
+    apiClient.get<ApiResponse<ContactMsg[]>>('/contact')
+      .then(r => { if (r.data.data) setMessages(r.data.data); })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const markRead = async (id: number) => {
+    await apiClient.patch(`/contact/${id}/read`);
+    setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
+  };
+
+  const deleteMsg = async (id: number) => {
+    await apiClient.delete(`/contact/${id}`);
+    setMessages(prev => prev.filter(m => m.id !== id));
+    if (expanded === id) setExpanded(null);
+  };
+
+  const unread = messages.filter(m => !m.isRead).length;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="h-5 w-5 text-primary" />
+          Contact Messages
+          {unread > 0 && (
+            <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs text-primary-foreground font-bold">
+              {unread}
+            </span>
+          )}
+        </CardTitle>
+        <Button variant="outline" size="sm" onClick={load}>Refresh</Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="space-y-3">
+            {[1,2,3].map(i => <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />)}
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Mail className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p>No messages yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {messages.map(msg => (
+              <div
+                key={msg.id}
+                className={`rounded-lg border p-4 transition-colors ${
+                  msg.isRead ? 'border-border bg-card' : 'border-primary/30 bg-primary/5'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{msg.name}</span>
+                      {!msg.isRead && (
+                        <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-medium">New</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">{msg.email}</span>
+                      {msg.phone && <span className="text-xs text-muted-foreground">{msg.phone}</span>}
+                    </div>
+                    {msg.subject && (
+                      <p className="text-sm font-medium mt-0.5">{msg.subject}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(msg.submittedAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!msg.isRead && (
+                      <Button variant="ghost" size="sm" onClick={() => markRead(msg.id)} title="Mark as read">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpanded(expanded === msg.id ? null : msg.id)}
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${expanded === msg.id ? 'rotate-180' : ''}`} />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteMsg(msg.id)} className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {expanded === msg.id && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{msg.message}</p>
+                    <a
+                      href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject || 'Your message')}`}
+                      className="inline-flex items-center gap-1.5 mt-3 text-xs text-primary hover:underline"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Reply via email
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -45,7 +45,7 @@ export default function MockTestsPage() {
 
   const hasFilters = certFilter || typeFilter;
 
-  const selectClass = "h-9 rounded-md border border-input bg-background px-3 text-sm";
+  const selectClass = "h-9 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-auto";
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -59,7 +59,7 @@ export default function MockTestsPage() {
       <p className="text-muted-foreground mb-6">Timed practice tests to prepare for your certification exams</p>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 mb-6">
         <select
           value={certFilter}
           onChange={e => setCertFilter(e.target.value)}
@@ -87,7 +87,7 @@ export default function MockTestsPage() {
           </Button>
         )}
 
-        <span className="ml-auto text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground sm:ml-auto">
           {filtered.length} of {tests.length} tests
         </span>
       </div>
