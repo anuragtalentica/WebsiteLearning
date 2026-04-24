@@ -15,3 +15,12 @@ $RECYCLE.BIN/
 
 # Logs
 *.log
+
+# Root-level node artifacts (used for one-off scripts)
+node_modules/
+package.json
+package-lock.json
+create-qa-doc.js
+
+# Claude IDE local config
+.claude/settings.local.json
