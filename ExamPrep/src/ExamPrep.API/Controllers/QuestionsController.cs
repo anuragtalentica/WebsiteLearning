@@ -97,13 +97,10 @@ public class QuestionsController : ControllerBase
         return Ok(ApiResponse<QuestionDto>.Ok(question));
     }
 
-    [Authorize]
     [HttpPost("{id}/submit")]
     public async Task<ActionResult<ApiResponse<AnswerResultDto>>> SubmitAnswer(int id, [FromBody] SubmitAnswerDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(ApiResponse<AnswerResultDto>.Fail("User not authenticated."));
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // null for guests — still allowed, progress just won't be saved
 
         try
         {

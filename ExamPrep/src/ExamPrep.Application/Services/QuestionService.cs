@@ -28,7 +28,7 @@ public class QuestionService : IQuestionService
         return question == null ? null : MapToDto(question);
     }
 
-    public async Task<AnswerResultDto> SubmitAnswerAsync(int questionId, string userId, SubmitAnswerDto dto)
+    public async Task<AnswerResultDto> SubmitAnswerAsync(int questionId, string? userId, SubmitAnswerDto dto)
     {
         var question = await _questionRepo.GetWithOptionsAsync(questionId)
             ?? throw new InvalidOperationException("Question not found.");
@@ -38,17 +38,20 @@ public class QuestionService : IQuestionService
 
         var correctOption = question.Options.First(o => o.IsCorrect);
 
-        var attempt = new UserQuestionAttempt
+        // Only save attempt for authenticated users
+        if (!string.IsNullOrEmpty(userId))
         {
-            UserId = userId,
-            QuestionId = questionId,
-            SelectedOptionId = dto.SelectedOptionId,
-            IsCorrect = selectedOption.IsCorrect,
-            AttemptedAt = DateTime.UtcNow
-        };
-
-        await _attemptRepo.AddAsync(attempt);
-        await _attemptRepo.SaveChangesAsync();
+            var attempt = new UserQuestionAttempt
+            {
+                UserId = userId,
+                QuestionId = questionId,
+                SelectedOptionId = dto.SelectedOptionId,
+                IsCorrect = selectedOption.IsCorrect,
+                AttemptedAt = DateTime.UtcNow
+            };
+            await _attemptRepo.AddAsync(attempt);
+            await _attemptRepo.SaveChangesAsync();
+        }
 
         return new AnswerResultDto
         {

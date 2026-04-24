@@ -30,6 +30,13 @@ export default function CourseDetailPage() {
       if (modRes.data.data) {
         setModules(modRes.data.data);
         setTotalLessons(modRes.data.data.reduce((sum, m) => sum + m.lessonCount, 0));
+        // Auto-expand and load first module
+        const first = modRes.data.data[0];
+        if (first) {
+          setExpandedModule(first.id);
+          apiClient.get<ApiResponse<ModuleDetail>>(`/modules/${first.id}`)
+            .then(r => { if (r.data.data) setModuleDetails(prev => ({ ...prev, [first.id]: r.data.data! })); });
+        }
       }
     }).finally(() => setLoading(false));
   }, [certId]);

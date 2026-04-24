@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Outlet, Link } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Link, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -141,12 +141,16 @@ function Footer() {
   );
 }
 
+const QUIET_ROUTES = ['/lessons/', '/practice/', '/tests/'];
+
 function AppLayout() {
   const { isAdmin } = useAuth();
+  const location = useLocation();
+  const isStudyRoute = QUIET_ROUTES.some(r => location.pathname.startsWith(r));
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      {!isAdmin && <NewsTicker />}
+      {!isAdmin && !isStudyRoute && <NewsTicker />}
       <main className="flex-1">
         <Outlet />
       </main>

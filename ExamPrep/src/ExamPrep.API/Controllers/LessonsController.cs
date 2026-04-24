@@ -54,12 +54,17 @@ public class LessonsController : ControllerBase
         var prev = idx > 0 ? siblings[idx - 1] : null;
         var next = idx < siblings.Count - 1 ? siblings[idx + 1] : null;
 
+        var module = await _db.Modules.FindAsync(lesson.ModuleId);
+
         return Ok(ApiResponse<LessonNavDto>.Ok(new LessonNavDto
         {
             PrevId = prev?.Id,
             PrevTitle = prev?.Title,
             NextId = next?.Id,
-            NextTitle = next?.Title
+            NextTitle = next?.Title,
+            CertificationId = module?.CertificationId,
+            CurrentPosition = idx + 1,
+            TotalInModule = siblings.Count
         }));
     }
 
@@ -98,4 +103,7 @@ public class LessonNavDto
     public string? PrevTitle { get; set; }
     public int? NextId { get; set; }
     public string? NextTitle { get; set; }
+    public int? CertificationId { get; set; }
+    public int CurrentPosition { get; set; }
+    public int TotalInModule { get; set; }
 }

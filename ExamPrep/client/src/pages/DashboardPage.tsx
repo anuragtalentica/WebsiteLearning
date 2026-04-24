@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { Target, CheckCircle, XCircle, FlaskConical, Trophy, Clock, BookOpen, MinusCircle, BarChart2, Bookmark as BookmarkIcon, BookmarkX, GraduationCap } from 'lucide-react';
+import { Target, CheckCircle, XCircle, FlaskConical, Trophy, Clock, BookOpen, MinusCircle, BarChart2, Bookmark as BookmarkIcon, BookmarkX, GraduationCap, ArrowRight } from 'lucide-react';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -48,6 +48,7 @@ export default function DashboardPage() {
   );
 
   const visibleAttempts = showAllAttempts ? attempts : attempts.slice(0, 5);
+  const isNewUser = !loading && (dashboard?.totalQuestionsAttempted ?? 0) === 0 && attempts.length === 0 && courseProgress.length === 0;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -55,6 +56,30 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold mb-1">Welcome back, {user?.fullName || 'Learner'}!</h1>
         <p className="text-muted-foreground">Track your learning progress and test results</p>
       </div>
+
+      {/* Get Started checklist — shown only for brand new users */}
+      {isNewUser && (
+        <div className="mb-8 rounded-xl border border-primary/30 bg-primary/5 p-6">
+          <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" /> Get started with ExamPrep
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">Complete these steps to kick off your certification journey.</p>
+          <div className="space-y-3">
+            {[
+              { label: 'Pick a certification to study', to: '/courses', done: false },
+              { label: 'Read your first lesson', to: '/courses', done: false },
+              { label: 'Answer 10 practice questions', to: '/courses', done: false },
+              { label: 'Take a mock test', to: '/tests', done: false },
+            ].map((step, i) => (
+              <Link key={i} to={step.to} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-primary/40 transition-colors group">
+                <div className="h-5 w-5 rounded-full border-2 border-muted-foreground shrink-0" />
+                <span className="text-sm flex-1">{step.label}</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

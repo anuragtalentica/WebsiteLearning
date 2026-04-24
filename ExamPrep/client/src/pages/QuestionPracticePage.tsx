@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { CheckCircle, XCircle, ArrowRight, ArrowLeft, Bookmark, BookmarkCheck, FlaskConical, RefreshCw, Trophy } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, ArrowLeft, Bookmark, BookmarkCheck, FlaskConical, RefreshCw, Trophy, Play, GraduationCap, LogIn } from 'lucide-react';
 
 export default function QuestionPracticePage() {
   const { topicId } = useParams<{ topicId: string }>();
@@ -32,6 +32,8 @@ export default function QuestionPracticePage() {
   const [stats, setStats] = useState<TopicStats | null>(null);
   const [retryWrongOnly, setRetryWrongOnly] = useState(!!retryIds);
   const [certificationId, setCertificationId] = useState<number | null>(null);
+  const [topicName, setTopicName] = useState<string>('');
+  const [started, setStarted] = useState(!!retryIds); // auto-start for retry mode
 
   useEffect(() => {
     if (retryIds && retryIds.length > 0) {
@@ -50,7 +52,7 @@ export default function QuestionPracticePage() {
     ]).then(([qRes, sRes, infoRes]) => {
       if (qRes.data.data) { setAllQuestions(qRes.data.data); setQuestions(qRes.data.data); }
       if (sRes.data.data) setStats(sRes.data.data);
-      if (infoRes.data.data) setCertificationId(infoRes.data.data.certificationId);
+      if (infoRes.data.data) { setCertificationId(infoRes.data.data.certificationId); setTopicName(infoRes.data.data.name); }
     }).finally(() => setLoading(false));
   }, [topicId]);
 
@@ -108,6 +110,43 @@ export default function QuestionPracticePage() {
 
   if (loading) return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
   if (questions.length === 0 && allQuestions.length === 0) return <div className="text-center py-20 text-muted-foreground">No questions found for this topic.</div>;
+
+  // Ready screen — shown before starting (only for normal topic practice, not retry)
+  if (!started) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20 text-center">
+        <FlaskConical className="h-14 w-14 text-primary mx-auto mb-4" />
+        <h1 className="text-2xl font-bold mb-1">{topicName || 'Practice'}</h1>
+        <p className="text-muted-foreground mb-6">
+          {allQuestions.length} questions · Practice Mode · Answers revealed immediately
+        </p>
+        {stats && (
+          <div className="flex justify-center gap-4 mb-6 text-sm">
+            <span className="text-success">{stats.easy} Easy</span>
+            <span className="text-warning">{stats.medium} Medium</span>
+            <span className="text-destructive">{stats.hard} Hard</span>
+          </div>
+        )}
+        {!isAuthenticated && (
+          <div className="mb-6 rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+            <GraduationCap className="h-5 w-5 mx-auto mb-2 text-primary" />
+            <p className="mb-2">You can try questions as a guest — but your progress won't be saved.</p>
+            <Link to="/login" className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+              <LogIn className="h-4 w-4" /> Sign in to track your progress
+            </Link>
+          </div>
+        )}
+        {certificationId && (
+          <Link to={`/courses/${certificationId}`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 block">
+            <ArrowLeft className="h-4 w-4" /> Back to course
+          </Link>
+        )}
+        <Button size="lg" className="gap-2 w-full" onClick={() => setStarted(true)}>
+          <Play className="h-5 w-5" /> Start Practice
+        </Button>
+      </div>
+    );
+  }
 
   const q = questions[current];
 

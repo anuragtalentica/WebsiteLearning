@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { CheckCircle, XCircle, MinusCircle, Clock, Trophy, ArrowLeft, ArrowRight, RotateCcw, RefreshCw, FlaskConical } from 'lucide-react';
+import { CheckCircle, XCircle, MinusCircle, Clock, Trophy, ArrowLeft, ArrowRight, RotateCcw, RefreshCw, FlaskConical, BookOpen, BarChart2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 function ReviewQuestion({ q, index, total, onPrev, onNext }: {
@@ -240,6 +240,52 @@ export default function TestResultPage() {
             {reviewError}
           </div>
         )}
+
+        {/* Next Steps card */}
+        <Card className="mb-6">
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><BarChart2 className="h-4 w-4 text-primary" />What's Next?</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {test?.certificationId && (
+              <Link to={`/courses/${test.certificationId}`}>
+                <div className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-primary/40 hover:bg-secondary/30 transition-colors cursor-pointer">
+                  <BookOpen className="h-5 w-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Study the course</p>
+                    <p className="text-xs text-muted-foreground">Go back to lessons and review</p>
+                  </div>
+                </div>
+              </Link>
+            )}
+            <Link to="/tests">
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-primary/40 hover:bg-secondary/30 transition-colors cursor-pointer">
+                <FlaskConical className="h-5 w-5 text-warning shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Try another test</p>
+                  <p className="text-xs text-muted-foreground">Browse all available mock exams</p>
+                </div>
+              </div>
+            </Link>
+            <Link to="/dashboard">
+              <div className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-primary/40 hover:bg-secondary/30 transition-colors cursor-pointer">
+                <BarChart2 className="h-5 w-5 text-info shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">View your dashboard</p>
+                  <p className="text-xs text-muted-foreground">See overall progress and history</p>
+                </div>
+              </div>
+            </Link>
+            {result.wrongAnswers > 0 && (
+              <div onClick={handlePracticeWrong}
+                className="flex items-center gap-3 rounded-lg border border-border p-3 hover:border-primary/40 hover:bg-secondary/30 transition-colors cursor-pointer">
+                <XCircle className="h-5 w-5 text-destructive shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Practice wrong answers</p>
+                  <p className="text-xs text-muted-foreground">{result.wrongAnswers} questions to review</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="flex flex-wrap gap-3 justify-center">
           <Link to="/tests"><Button variant="outline">All Tests</Button></Link>

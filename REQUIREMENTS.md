@@ -248,11 +248,11 @@
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 8.2.1 | 404 Not Found page | ✅ Done | `NotFoundPage.tsx` + catch-all `*` route in App.tsx. |
-| 8.2.2 | Browser unload warning during mock test | ✅ Done | `beforeunload` event listener in MockTestTakePage — browser shows native "Leave site?" dialog. |
+| 8.2.2 | Browser unload warning during mock test | ✅ Done | `beforeunload` + `useBlocker` (data router) in MockTestTakePage — blocks both SPA nav and browser close. |
 | 8.2.3 | Toast/snackbar notification system | ✅ Done | `sonner` installed; `<Toaster>` in App.tsx. Ready to call `toast.success()` / `toast.error()` throughout the app. |
 | 8.2.4 | Password strength guidance on Register | ✅ Done | Hint text below password field lists all complexity requirements. |
 | 8.2.5 | User's best score shown on Mock Tests page | ✅ Done | `GET /api/mocktests/my-best-scores` endpoint + overlay on each test card showing best % and pass/fail. |
-| 8.2.6 | Empty state pages | ⬜ Pending | Most critical lists already have empty states. Full audit pending. |
+| 8.2.6 | Empty state pages | ✅ Done | All critical pages have empty states with CTAs. |
 
 ### 8.3 Branding / SEO
 | # | Feature | Status | Notes |
@@ -266,3 +266,26 @@
 |---|---|---|---|
 | 8.4.1 | AboutPage — replace hardcoded cert list with dynamic data | ✅ Done | AboutPage now fetches `/api/certifications` and renders the live list with skeleton loading. |
 | 8.4.2 | Terms of Service and Privacy Policy — real content | ⬜ Pending | Current pages have placeholder text. Must have real legal content before accepting real users. |
+
+---
+
+## 9. UX Improvements — User Perspective Audit (2026-04-23)
+
+> Identified by analyzing the app from a first-time user's perspective. Items 1–13 implemented; item 14 deferred.
+
+| # | Issue | Priority | Status | Notes |
+|---|---|---|---|---|
+| 1 | No post-registration onboarding | Critical | ✅ Done | Register redirects to `/courses` with welcome banner + `newUser` state. |
+| 2 | Login wall on tests with no warning | Critical | ✅ Done | MockTestsPage shows lock icon + "Sign in to Start" button for guests instead of silently redirecting. |
+| 3 | News ticker during study | Critical | ✅ Done | `QUIET_ROUTES` in App.tsx hides NewsTicker on `/lessons/`, `/practice/`, `/tests/`. |
+| 4 | Dead end after last lesson | High | ✅ Done | Module completion card shown after last lesson — links to practice topics and mock tests. |
+| 5 | Empty dashboard for new users | High | ✅ Done | Get-started checklist shown when user has zero activity (questions, tests, courses). |
+| 6 | Can't sample questions without account | High | ✅ Done | `/questions/{id}/submit` no longer requires auth — guests can answer questions, progress not saved. Practice ready screen shows sign-in CTA for guests. |
+| 7 | No lesson position (3 of 9) | Medium | ✅ Done | LessonNav API now returns `currentPosition` + `totalInModule`. Badge shows "Lesson X of Y". |
+| 8 | No practice ready screen | Medium | ✅ Done | QuestionPracticePage shows a splash screen (topic name, question count, difficulty breakdown) before starting. |
+| 9 | No progress on courses list | Medium | ✅ Done | CoursesPage fetches `/progress/courses` and overlays progress bar + % on each started course card. |
+| 10 | All modules collapsed on load | Medium | ✅ Done | CourseDetailPage auto-expands and loads the first module on mount. |
+| 11 | No next steps after test result | Medium | ✅ Done | TestResultPage shows "What's Next?" card with links to study course, more tests, dashboard, and practice wrong answers. |
+| 12 | User not highlighted in leaderboard | Low | ✅ Done | Current user's row highlighted with primary ring + "(You)" label matched by `user.fullName`. |
+| 13 | Back button broken (history vs route) | Low | ✅ Done | LessonPage back button uses `navigate('/courses/:certId')` from nav API, falls back to `navigate(-1)`. |
+| 14 | No keyboard shortcuts in exam | Low | ⬜ Deferred | Would allow 1–4 to select options, Enter to submit. Planned for future. |

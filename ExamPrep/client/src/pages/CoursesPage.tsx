@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiClient from '@/api/apiClient';
-import type { ApiResponse, Certification } from '@/types';
+import type { ApiResponse, Certification, CourseProgress } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Search, GraduationCap } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { ArrowRight, Search, GraduationCap, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 const difficultyVariant = (d?: string) => {
   switch (d) {
@@ -28,7 +30,11 @@ const categoryVariant = (cat?: string) => {
 };
 
 export default function CoursesPage() {
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
+  const isNewUser = location.state?.newUser === true;
   const [certs, setCerts] = useState<Certification[]>([]);
+  const [courseProgress, setCourseProgress] = useState<Record<number, number>>({});
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [difficultyFilter, setDifficultyFilter] = useState('All');
@@ -39,6 +45,18 @@ export default function CoursesPage() {
       .then(r => { if (r.data.data) setCerts(r.data.data); })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiClient.get<ApiResponse<CourseProgress[]>>('/progress/courses')
+      .then(r => {
+        if (r.data.data) {
+          const map: Record<number, number> = {};
+          r.data.data.forEach(cp => { map[cp.certificationId] = cp.percentComplete; });
+          setCourseProgress(map);
+        }
+      });
+  }, [isAuthenticated]);
 
   const categories = ['All', ...new Set(certs.map(c => c.category).filter(Boolean))];
   const difficulties = ['All', ...new Set(certs.map(c => c.difficulty).filter(Boolean))];
@@ -53,6 +71,17 @@ export default function CoursesPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      {/* Welcome banner for newly registered users */}
+      {isNewUser && (
+        <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 px-5 py-4 flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-sm">Welcome to ExamPrep!</p>
+            <p className="text-sm text-muted-foreground mt-0.5">Pick a certification below to start studying. Your progress is saved automatically.</p>
+          </div>
+        </div>
+      )}
+
       {/* Header section with light background */}
       <div className="rounded-xl border border-border bg-card/50 px-6 py-8 mb-8">
         <h1 className="text-3xl font-bold mb-2">Course Catalog</h1>
@@ -155,8 +184,16 @@ export default function CoursesPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{cert.description}</p>
+                    {courseProgress[cert.id] !== undefined ? (
+                      <div className="mb-3">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                          <span>Progress</span><span>{courseProgress[cert.id]}%</span>
+                        </div>
+                        <Progress value={courseProgress[cert.id]} className="h-1.5" />
+                      </div>
+                    ) : null}
                     <div className="text-sm text-primary font-medium flex items-center">
-                      View course <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      {courseProgress[cert.id] !== undefined ? 'Continue' : 'View course'} <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </CardContent>
                 </Card>

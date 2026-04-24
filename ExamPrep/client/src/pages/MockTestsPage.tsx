@@ -6,7 +6,7 @@ import type { ApiResponse, MockTest } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertTriangle, Target, FlaskConical, X, Trophy } from 'lucide-react';
+import { Clock, AlertTriangle, Target, FlaskConical, X, Trophy, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 export default function MockTestsPage() {
@@ -135,7 +135,15 @@ export default function MockTestsPage() {
                       {bestScores[test.id] >= test.passingScore && <span className="ml-1">(Passed)</span>}
                     </div>
                   )}
-                  <Link to={`/tests/${test.id}`}><Button className="w-full">{bestScores[test.id] !== undefined ? 'Retake Test' : 'Start Test'}</Button></Link>
+                  {isAuthenticated ? (
+                    <Link to={`/tests/${test.id}`}><Button className="w-full">{bestScores[test.id] !== undefined ? 'Retake Test' : 'Start Test'}</Button></Link>
+                  ) : (
+                    <Link to="/login" state={{ from: `/tests/${test.id}` }}>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Lock className="h-4 w-4" /> Sign in to Start
+                      </Button>
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>

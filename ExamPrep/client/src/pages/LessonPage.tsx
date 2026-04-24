@@ -6,7 +6,7 @@ import type { ApiResponse, LessonDetail, ExternalLink as ExtLink } from '@/types
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, Code, ExternalLink, BookOpen, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Code, ExternalLink, BookOpen, CheckCircle, ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 interface LessonNav {
@@ -14,6 +14,9 @@ interface LessonNav {
   prevTitle?: string;
   nextId?: number;
   nextTitle?: string;
+  certificationId?: number;
+  currentPosition?: number;
+  totalInModule?: number;
 }
 
 export default function LessonPage() {
@@ -54,13 +57,19 @@ export default function LessonPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <Link to={-1 as unknown as string} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+      <button onClick={() => nav.certificationId ? navigate(`/courses/${nav.certificationId}`) : navigate(-1)}
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
         <ArrowLeft className="h-4 w-4" /> Back to course
-      </Link>
+      </button>
 
       <h1 className="text-3xl font-bold mb-2">{lesson.title}</h1>
       <div className="flex gap-2 mb-8 flex-wrap">
-        <Badge variant="secondary"><BookOpen className="h-3 w-3 mr-1" />Lesson {lesson.orderIndex}</Badge>
+        <Badge variant="secondary">
+          <BookOpen className="h-3 w-3 mr-1" />
+          {nav.currentPosition && nav.totalInModule
+            ? `Lesson ${nav.currentPosition} of ${nav.totalInModule}`
+            : `Lesson ${lesson.orderIndex}`}
+        </Badge>
         {lesson.questionCount > 0 && <Badge variant="info">{lesson.questionCount} practice questions</Badge>}
         {marked && (
           <Badge variant="success" className="flex items-center gap-1">
@@ -125,6 +134,25 @@ export default function LessonPage() {
             ))}
           </CardContent>
         </Card>
+      )}
+
+      {/* Module completion card — shown when at the last lesson */}
+      {!nav.nextId && nav.certificationId && (
+        <div className="mt-8 rounded-xl border border-success/30 bg-success/5 p-6 text-center">
+          <Trophy className="h-10 w-10 text-success mx-auto mb-3" />
+          <h3 className="text-lg font-semibold mb-1">Module Complete!</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            You've finished all lessons in this module. Ready to test your knowledge?
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-3">
+            <Link to={`/courses/${nav.certificationId}/topics`}>
+              <Button variant="outline" className="w-full sm:w-auto">Practice Questions</Button>
+            </Link>
+            <Link to={`/tests`}>
+              <Button className="w-full sm:w-auto">Take a Mock Test</Button>
+            </Link>
+          </div>
+        </div>
       )}
 
       {/* Inline prev/next navigation */}

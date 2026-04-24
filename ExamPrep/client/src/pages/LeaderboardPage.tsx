@@ -5,6 +5,7 @@ import type { ApiResponse, Certification } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Medal, Target, CheckCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface LeaderboardEntry {
   rank: number;
@@ -22,6 +23,7 @@ const RANK_STYLES: Record<number, { icon: React.ReactNode; badge: string }> = {
 };
 
 export default function LeaderboardPage() {
+  const { user } = useAuth();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [certs, setCerts] = useState<Certification[]>([]);
   const [selectedCert, setSelectedCert] = useState<number | null>(null);
@@ -90,6 +92,7 @@ export default function LeaderboardPage() {
               <div className="space-y-3">
                 {entries.map((entry, i) => {
                   const style = RANK_STYLES[entry.rank];
+                  const isMe = !!user?.fullName && entry.displayName === user.fullName;
                   return (
                     <motion.div
                       key={entry.rank}
@@ -97,6 +100,7 @@ export default function LeaderboardPage() {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04 }}
                       className={`flex items-center gap-4 rounded-lg border p-4 ${
+                        isMe ? 'border-primary bg-primary/10 ring-1 ring-primary/30' :
                         entry.rank <= 3 ? 'border-primary/20 bg-primary/5' : 'border-border'
                       }`}
                     >
@@ -113,7 +117,10 @@ export default function LeaderboardPage() {
                           {entry.displayName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm truncate">{entry.displayName}</p>
+                          <p className="font-medium text-sm truncate">
+                          {entry.displayName}
+                          {isMe && <span className="ml-1.5 text-xs text-primary font-semibold">(You)</span>}
+                        </p>
                           <p className="text-xs text-muted-foreground">
                             {entry.testsPassed} test{entry.testsPassed !== 1 ? 's' : ''} passed
                           </p>
